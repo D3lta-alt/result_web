@@ -1,0 +1,95 @@
+Role 
+
+your a expert dev with 10 years of experience 
+
+task 
+
+build a prompt to make a table in  html and Jinja templates to build a clean, user-friendly interface that collects inputs and displays data beautifully    
+
+context 
+
+HTML Structure: Create a search form with a text input for the name and a calendar date-picker.
+
+Table Layout: Design an empty HTML <table> with headers for Name, Pass Date, GPA, and Major.
+
+State Management: Write JavaScript to capture form submissions, prevent default page reloads, and trigger API calls.
+
+Loading State: Add a visual spinner or a loading text placeholder while waiting for the data response.
+
+Error Handling: Build a visual alert box to show messages like "No students found" or "Server connection failed."
+
+Data Rendering: Write a JavaScript loop to dynamically inject the backend's JSON data rows into your HTML table.
+
+Pagination Controls: Add "Next" and "Previous" buttons at the bottom of the table to handle large data sets.
+
+(
+	Extra Info:
+		The Search Form: Create a <form> element. Give it an id="searchForm".
+
+		Name Input: Add an <input type="text"> with an id="nameInput" and a placeholder "Enter student name...".
+
+		Date Input: Add an <input type="date"> with an id="dateInput".
+
+		Submit Button: Add a <button type="submit">Search</button>.
+
+		The Feedback Area: Add an empty <div> with an id="messageArea" to show loading spinners or error messages later.
+
+		The Data Table: Create a <table> with an id="studentTable". Inside it, hardcode a <thead> row containing columns: Name, Passing Date, GPA, and Major.
+
+		The Table Body: Add an empty <tbody> tag with an id="tableBody". JavaScript will inject rows here. 
+
+	)
+
+Suggestion box 
+
+make a suggestion box to guid the new user to inform or to show the search box 
+
+Rules:
+
+Dont add the extra symbols 
+
+make the html formate adjust itself with the resolution of the device/screen.
+
+use this to link the other code from the js and css (Link them: Inside index.html, add <link rel="stylesheet" href="style.css"> in the <head> tag, and <script src="app.js" defer></script> right before the closing </body> tag.) 
+
+Stop Condition 
+avoid this 
+
+Do Not Use Tables for Layouts
+
+The Mistake: Using <table> tags to position your search inputs and buttons on the screen.
+Why avoid it: Tables are strictly for displaying tabular data (like your final student results).
+What to do instead: Use CSS Flexbox or Grid to design your form layout.
+
+Avoid "Div Soup" (Non-Semantic Code)
+
+The Mistake: Wrapping every single element in generic <div> tags (e.g., <div class="button">Search</div>).
+Why avoid it: Screen readers for visually impaired users and search engine bots cannot understand what your page means if everything is a <div>.
+What to do instead: Use semantic HTML tags. Use <form> for inputs, <button> for actions, <main> for the main content, and <th>/<td> inside your table.
+
+Do Not Hardcode Data Rows
+
+The Mistake: Manually typing out 5 or 10 dummy student rows (<tr><td>John Doe</td></tr>) directly into your index.html file.
+Why avoid it: In a real job, data is dynamic. Hardcoding rows defeats the purpose of learning JavaScript and APIs.
+What to do instead: Leave your <tbody> completely empty in HTML. Let your JavaScript file create and insert those rows dynamically when the data arrives.
+
+Never Skip the alt Attribute on Images
+
+The Mistake: Adding an image (like a school logo) using <img src="logo.png"> without an alt description.
+Why avoid it: It breaks web accessibility (a major point employers check for). 
+If the image fails to load, the user sees nothing.
+What to do instead: Always include a descriptive alt tag: <img src="logo.png" alt="University Campus Logo">.
+
+Avoid Inline Styles
+
+The Mistake: Adding design rules directly inside your HTML tags, such as <table style="width: 100%; color: blue;">.
+Why avoid it: It makes your HTML incredibly messy, hard to read, and difficult to debug or change later.
+What to do instead: Keep your styles completely separate in your style.css file using class selectors.
+
+Do Not Mix Up Button Types
+
+The Mistake: Forgetting to add type="submit" to your form's search button, or using a generic <a> link styled as a button.
+Why avoid it: Forms have native browser behaviors (like submitting when a user presses the "Enter" key). If you don't use the correct button type, these built-in accessibility features break.
+What to do instead: Always use <button type="submit">Search</button> inside a <form>.
+
+
