@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Create Birthday Wish 🎂</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Cinzel:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --rose:#c9185b;--rose-light:#f48fb1;--blush:#fce4ec;
+  --deep:#1a0010;--cream:#fff8f9;--gold:#d4a853;
+}
+body{
+  min-height:100vh;
+  background: radial-gradient(ellipse at 20% 50%, #3d0030 0%, #1a0010 40%, #0d001a 100%);
+  font-family:'Cormorant Garamond',serif;
+  color:var(--cream);
+  display:flex;align-items:center;justify-content:center;
+  padding:2rem 1rem;
+}
+
+/* Floating petals background */
+.petals{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0;}
+.petal{
+  position:absolute;width:10px;height:10px;
+  background:var(--rose-light);opacity:0;
+  border-radius:50% 0;
+  animation:fall linear infinite;
+}
+@keyframes fall{
+  0%{transform:translateY(-20px) rotate(0deg);opacity:.6}
+  100%{transform:translateY(110vh) rotate(720deg);opacity:0}
+}
+
+.card{
+  position:relative;z-index:1;
+  background:rgba(255,255,255,.06);
+  backdrop-filter:blur(16px);
+  border:1px solid rgba(201,24,91,.3);
+  border-radius:24px;
+  padding:3rem 2.5rem;
+  max-width:640px;width:100%;
+  box-shadow:0 0 60px rgba(201,24,91,.2),inset 0 0 40px rgba(255,255,255,.03);
+}
+
+h1{
+  font-family:'Cinzel',serif;
+  font-size:2rem;letter-spacing:.12em;
+  text-align:center;color:var(--gold);
+  text-shadow:0 0 30px rgba(212,168,83,.5);
+  margin-bottom:.3rem;
+}
+.subtitle{text-align:center;color:var(--rose-light);font-style:italic;font-size:1.1rem;margin-bottom:2rem;}
+
+.field{margin-bottom:1.6rem;}
+label{
+  display:block;font-size:.85rem;letter-spacing:.1em;
+  color:var(--rose-light);text-transform:uppercase;margin-bottom:.5rem;
+}
+input[type=text],textarea{
+  width:100%;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(201,24,91,.35);
+  border-radius:10px;
+  color:var(--cream);
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.05rem;
+  padding:.7rem 1rem;
+  outline:none;
+  transition:border-color .3s;
+}
+input[type=text]:focus,textarea:focus{border-color:var(--rose);}
+textarea{resize:vertical;min-height:90px;}
+.word-count{font-size:.8rem;color:var(--rose-light);text-align:right;margin-top:.3rem;opacity:.8;}
+
+/* Drop zone */
+.drop-zone{
+  border:2px dashed rgba(201,24,91,.45);
+  border-radius:14px;
+  padding:2rem;
+  text-align:center;
+  cursor:pointer;
+  transition:all .3s;
+  position:relative;
+}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--rose);background:rgba(201,24,91,.08);}
+.drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.dz-icon{font-size:2.5rem;margin-bottom:.5rem;}
+.dz-text{color:var(--rose-light);font-size:1rem;}
+.dz-sub{font-size:.82rem;color:rgba(244,143,177,.6);margin-top:.3rem;}
+
+/* Preview grid */
+#preview-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(80px,1fr));
+  gap:.5rem;
+  margin-top:1rem;
+}
+.preview-item{
+  position:relative;border-radius:8px;overflow:hidden;
+  aspect-ratio:1;
+}
+.preview-item img{width:100%;height:100%;object-fit:cover;}
+.preview-item .rm{
+  position:absolute;top:3px;right:3px;
+  background:rgba(0,0,0,.6);color:#fff;
+  border:none;border-radius:50%;
+  width:18px;height:18px;font-size:.7rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.preview-item.error-item{
+  border:2px solid #ff5252;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.6rem;text-align:center;padding:.3rem;
+  background:rgba(255,82,82,.1);color:#ff8a80;
+}
+
+/* Error popup */
+.err-popup{
+  display:none;
+  position:fixed;inset:0;z-index:999;
+  background:rgba(0,0,0,.6);
+  align-items:center;justify-content:center;
+}
+.err-popup.show{display:flex;}
+.err-box{
+  background:#1e0015;border:1px solid #ff5252;
+  border-radius:16px;padding:2rem;max-width:440px;width:90%;
+  box-shadow:0 0 40px rgba(255,82,82,.3);
+}
+.err-box h3{color:#ff8a80;font-family:'Cinzel',serif;margin-bottom:1rem;}
+.err-list{list-style:none;max-height:220px;overflow-y:auto;}
+.err-list li{
+  display:flex;align-items:center;gap:.6rem;
+  padding:.4rem 0;border-bottom:1px solid rgba(255,82,82,.15);
+  font-size:.9rem;
+}
+.err-thumb{width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid #ff5252;}
+.close-err{
+  margin-top:1rem;background:var(--rose);color:#fff;
+  border:none;border-radius:8px;padding:.5rem 1.4rem;cursor:pointer;
+  font-family:'Cinzel',serif;letter-spacing:.05em;
+}
+
+/* Generate button */
+.btn-gen{
+  width:100%;padding:1rem;margin-top:.5rem;
+  background:linear-gradient(135deg,#c9185b,#880e4f);
+  color:#fff;border:none;border-radius:12px;
+  font-family:'Cinzel',serif;font-size:1rem;letter-spacing:.12em;
+  cursor:pointer;
+  box-shadow:0 4px 24px rgba(201,24,91,.4);
+  transition:transform .2s,box-shadow .2s;
+}
+.btn-gen:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(201,24,91,.5);}
+.btn-gen:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+/* Link result */
+#result{display:none;margin-top:1.5rem;}
+.link-box{
+  background:rgba(201,24,91,.12);
+  border:1px solid rgba(201,24,91,.4);
+  border-radius:10px;
+  padding:1rem 1.2rem;
+  display:flex;align-items:center;gap:.8rem;
+  word-break:break-all;
+}
+.link-box a{color:var(--rose-light);font-size:.95rem;flex:1;}
+.copy-btn{
+  background:var(--rose);color:#fff;border:none;
+  border-radius:7px;padding:.4rem .9rem;cursor:pointer;
+  font-family:'Cinzel',serif;font-size:.75rem;white-space:nowrap;
+}
+.result-note{font-size:.82rem;color:rgba(244,143,177,.7);text-align:center;margin-top:.6rem;}
+</style>
+</head>
+<body>
+<!-- Floating petals -->
+<div class="petals" id="petals"></div>
+
+<div class="card">
+  <h1>✦ Birthday Wish ✦</h1>
+  <p class="subtitle">Craft a magical gift for someone you love</p>
+
+  <!-- Recipient name -->
+  <div class="field">
+    <label>Recipient's Name</label>
+    <input type="text" id="recipient" placeholder="e.g. Sarah" maxlength="40"/>
+  </div>
+
+  <!-- Photo upload -->
+  <div class="field">
+    <label>Upload Photos <span style="opacity:.6">(up to 30 · max 5 MB each)</span></label>
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" multiple accept="image/*"/>
+      <div class="dz-icon">🌸</div>
+      <div class="dz-text">Drop photos here or click to browse</div>
+      <div class="dz-sub">PNG · JPG · GIF · WEBP &nbsp;|&nbsp; Max 5 MB per photo</div>
+    </div>
+    <div id="preview-grid"></div>
+  </div>
+
+  <!-- Message -->
+  <div class="field">
+    <label>Message <span style="opacity:.6">(optional · shown as roots)</span></label>
+    <textarea id="message" placeholder="e.g. Happy birthday be happy get success..." maxlength="300"></textarea>
+    <div class="word-count"><span id="wc">0</span> / 20 words</div>
+  </div>
+
+  <button class="btn-gen" id="genBtn" onclick="generate()">✨ Generate Wish Link</button>
+
+  <div id="result">
+    <div class="link-box">
+      <a id="wishLink" href="#" target="_blank"></a>
+      <button class="copy-btn" onclick="copyLink()">Copy</button>
+    </div>
+    <p class="result-note">Share this link with your recipient — they won't see how many photos you've added 🌹</p>
+  </div>
+</div>
+
+<!-- Error popup -->
+<div class="err-popup" id="errPopup">
+  <div class="err-box">
+    <h3>⚠ Some photos were too large</h3>
+    <ul class="err-list" id="errList"></ul>
+    <button class="close-err" onclick="document.getElementById('errPopup').classList.remove('show')">OK</button>
+  </div>
+</div>
+
+<script>
+// ── Petals ────────────────────────────────────────────────────────────────────
+const petalsEl = document.getElementById('petals');
+for(let i=0;i<22;i++){
+  const p=document.createElement('div');
+  p.className='petal';
+  p.style.left=Math.random()*100+'%';
+  p.style.animationDuration=(6+Math.random()*10)+'s';
+  p.style.animationDelay=(Math.random()*12)+'s';
+  p.style.width=p.style.height=(6+Math.random()*8)+'px';
+  p.style.opacity=0;
+  petalsEl.appendChild(p);
+}
+
+// ── File management ────────────────────────────────────────────────────────────
+let validFiles=[], oversizedFiles=[];
+const MAX_MB=5, MAX_FILES=30;
+const grid=document.getElementById('preview-grid');
+
+function handleFiles(newFiles){
+  oversizedFiles=[];
+  const toAdd=[...newFiles].slice(0, MAX_FILES - validFiles.length);
+  for(const f of toAdd){
+    if(f.size > MAX_MB*1024*1024){oversizedFiles.push(f);continue;}
+    if(validFiles.length>=MAX_FILES) break;
+    validFiles.push(f);
+  }
+  renderGrid();
+  if(oversizedFiles.length) showErrPopup(oversizedFiles);
+}
+
+function renderGrid(){
+  grid.innerHTML='';
+  validFiles.forEach((f,i)=>{
+    const url=URL.createObjectURL(f);
+    const div=document.createElement('div');
+    div.className='preview-item';
+    div.innerHTML=`<img src="${url}" alt="photo"/><button class="rm" onclick="removeFile(${i})">✕</button>`;
+    grid.appendChild(div);
+  });
+}
+
+function removeFile(i){validFiles.splice(i,1);renderGrid();}
+
+function showErrPopup(files){
+  const list=document.getElementById('errList');
+  list.innerHTML='';
+  files.forEach(f=>{
+    const url=URL.createObjectURL(f);
+    const mb=(f.size/1024/1024).toFixed(2);
+    const li=document.createElement('li');
+    li.innerHTML=`<img class="err-thumb" src="${url}"/><span><strong>${f.name}</strong><br/>${mb} MB — exceeds 5 MB limit</span>`;
+    list.appendChild(li);
+  });
+  document.getElementById('errPopup').classList.add('show');
+}
+
+// Drop zone events
+const dz=document.getElementById('dropZone');
+const fi=document.getElementById('fileInput');
+fi.onchange=e=>handleFiles(e.target.files);
+dz.ondragover=e=>{e.preventDefault();dz.classList.add('drag');};
+dz.ondragleave=()=>dz.classList.remove('drag');
+dz.ondrop=e=>{e.preventDefault();dz.classList.remove('drag');handleFiles(e.dataTransfer.files);};
+
+// ── Word counter ───────────────────────────────────────────────────────────────
+const msgEl=document.getElementById('message');
+const wcEl=document.getElementById('wc');
+function countWords(s){return s.trim()===''?0:s.trim().split(/\s+/).length;}
+msgEl.oninput=function(){
+  const words=countWords(this.value);
+  if(words>20){
+    // trim to 20 words
+    const trimmed=this.value.trim().split(/\s+/).slice(0,20).join(' ');
+    this.value=trimmed;
+  }
+  wcEl.textContent=Math.min(countWords(this.value),20);
+};
+
+// ── Generate ───────────────────────────────────────────────────────────────────
+async function generate(){
+  if(!validFiles.length){alert('Please upload at least one photo.');return;}
+  const btn=document.getElementById('genBtn');
+  btn.disabled=true;btn.textContent='Creating magic…';
+
+  const fd=new FormData();
+  validFiles.forEach(f=>fd.append('photos',f));
+  fd.append('recipient', document.getElementById('recipient').value);
+  fd.append('message', msgEl.value);
+
+  try{
+    const res=await fetch('/create',{method:'POST',body:fd});
+    const data=await res.json();
+    if(data.error){alert(data.error);return;}
+    const linkEl=document.getElementById('wishLink');
+    linkEl.href=data.link;linkEl.textContent=data.link;
+    document.getElementById('result').style.display='block';
+    if(data.bad_files&&data.bad_files.length){
+      alert('Some files were skipped (too large or invalid): '+data.bad_files.join(', '));
+    }
+  }catch(e){alert('Something went wrong. Is the server running?');}
+  finally{btn.disabled=false;btn.textContent='✨ Generate Wish Link';}
+}
+
+function copyLink(){
+  const link=document.getElementById('wishLink').textContent;
+  navigator.clipboard.writeText(link).then(()=>alert('Link copied! 🌹'));
+}
+</script>
+</body>
+</html>

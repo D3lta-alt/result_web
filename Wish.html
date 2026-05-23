@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Happy Birthday {{ recipient }} 🎂</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Cinzel:wght@400;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --rose:#c9185b;--rose-light:#f48fb1;--blush:#fce4ec;
+  --deep:#0d0008;--cream:#fff8f9;--gold:#d4a853;--gold2:#f5c842;
+}
+body{
+  background:radial-gradient(ellipse at 30% 60%, #3d0030 0%, #1a0010 35%, #0d001a 70%, #000510 100%);
+  min-height:100vh;overflow-x:hidden;
+  font-family:'Cormorant Garamond',serif;
+  color:var(--cream);
+}
+
+/* ── Stars ────────────────────────────────────────────────────────────────── */
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0;}
+.star{position:absolute;border-radius:50%;background:#fff;animation:twinkle linear infinite;}
+@keyframes twinkle{0%,100%{opacity:.8}50%{opacity:.1}}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+#header{
+  position:relative;z-index:2;
+  text-align:center;padding:2.5rem 1rem 1rem;
+}
+#header h1{
+  font-family:'Cinzel',serif;
+  font-size:clamp(1.8rem,5vw,3.5rem);
+  color:var(--gold);
+  text-shadow:0 0 40px rgba(212,168,83,.7),0 0 80px rgba(212,168,83,.3);
+  letter-spacing:.15em;
+  animation:glow 3s ease-in-out infinite alternate;
+}
+@keyframes glow{
+  from{text-shadow:0 0 20px rgba(212,168,83,.5),0 0 40px rgba(201,24,91,.3);}
+  to{text-shadow:0 0 50px rgba(212,168,83,.9),0 0 100px rgba(201,24,91,.5);}
+}
+#header .sub{
+  font-family:'Dancing Script',cursive;
+  color:var(--rose-light);font-size:clamp(1rem,2.5vw,1.5rem);
+  margin-top:.3rem;opacity:.9;
+}
+
+/* ── Canvas wrapper ───────────────────────────────────────────────────────── */
+#canvas-wrap{
+  position:relative;z-index:2;
+  display:flex;justify-content:center;
+  padding:0 1rem;
+}
+#treeCanvas{display:block;max-width:100%;}
+
+/* ── Photo modal ──────────────────────────────────────────────────────────── */
+#photoModal{
+  display:none;
+  position:fixed;inset:0;z-index:100;
+  background:rgba(0,0,0,.75);
+  align-items:center;justify-content:center;
+  backdrop-filter:blur(8px);
+}
+#photoModal.show{display:flex;}
+#photoModal img{
+  max-width:min(88vw,600px);max-height:80vh;
+  border-radius:16px;
+  border:2px solid var(--rose);
+  box-shadow:0 0 60px rgba(201,24,91,.6);
+  animation:popIn .4s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* ── Footer message / roots hint ─────────────────────────────────────────── */
+#footer{
+  position:relative;z-index:2;
+  text-align:center;padding:1.5rem 1rem 3rem;
+  font-family:'Dancing Script',cursive;
+  font-size:1.1rem;color:var(--rose-light);
+  opacity:.7;
+}
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<div id="header">
+  <h1>✦ Happy Birthday {% if recipient %}{{ recipient }}{% else %}To You{% endif %} ✦</h1>
+  <p class="sub">A little magic, grown just for you 🌹</p>
+</div>
+
+<div id="canvas-wrap">
+  <canvas id="treeCanvas"></canvas>
+</div>
+
+<div id="footer">scroll down to read the roots ✨</div>
+
+<!-- Photo popup -->
+<div id="photoModal" onclick="this.classList.remove('show')">
+  <img id="modalImg" src="" alt="Memory"/>
+</div>
+
+<script>
+// ── Data from server ──────────────────────────────────────────────────────────
+const PHOTOS   = {{ photos_json|safe }};
+const MESSAGE  = {{ message|tojson }};
+
+// ── Stars ─────────────────────────────────────────────────────────────────────
+const starsEl = document.getElementById('stars');
+for(let i=0;i<120;i++){
+  const s=document.createElement('div');s.className='star';
+  const sz=Math.random()*2.5+.5;
+  Object.assign(s.style,{
+    width:sz+'px',height:sz+'px',
+    left:Math.random()*100+'%',top:Math.random()*100+'%',
+    animationDuration:(2+Math.random()*5)+'s',
+    animationDelay:(Math.random()*6)+'s',
+    opacity:Math.random()*.8+.2,
+  });
+  starsEl.appendChild(s);
+}
+
+// ── Canvas setup ──────────────────────────────────────────────────────────────
+const canvas = document.getElementById('treeCanvas');
+const ctx    = canvas.getContext('2d');
+
+const W = Math.min(window.innerWidth - 32, 900);
+const H = Math.round(W * 1.15);
+canvas.width  = W;
+canvas.height = H;
+
+// ── Utility ───────────────────────────────────────────────────────────────────
+function lerp(a,b,t){return a+(b-a)*t;}
+function rand(a,b){return a+Math.random()*(b-a);}
+
+// ── Tree generation ───────────────────────────────────────────────────────────
+// Each branch stored as {x1,y1,x2,y2,depth,angle,len}
+// Leaves stored as {cx,cy,angle,baseAngle,phase,photoIdx,size}
+const branches=[], leaves=[];
+
+const ROOT_X = W/2;
+const ROOT_Y = H - (MESSAGE.trim() ? H*0.22 : H*0.08);
+const TRUNK_LEN = H * 0.28;
+const MAX_DEPTH = 6;
+
+function growBranch(x,y,angle,len,depth){
+  if(depth>MAX_DEPTH||len<8) return;
+  const rad=angle*Math.PI/180;
+  const x2=x+Math.cos(rad)*len;
+  const y2=y-Math.sin(rad)*len;
+  branches.push({x1:x,y1:y,x2,y2,depth,len});
+
+  if(depth===MAX_DEPTH){
+    // place a leaf at tip
+    leaves.push({
+      cx:x2, cy:y2,
+      baseAngle:angle,
+      phase:rand(0,Math.PI*2),
+      photoIdx:Math.floor(Math.random()*PHOTOS.length),
+      size: W*0.038 + rand(0,W*0.012),
+      swayAmp: rand(6,14),
+      swaySpeed: rand(0.6,1.4),
+    });
+    return;
+  }
+
+  const spread = lerp(28,18,(depth/MAX_DEPTH));
+  const lenMul = rand(0.68,0.78);
+  growBranch(x2,y2, angle+spread,       len*lenMul, depth+1);
+  growBranch(x2,y2, angle-spread,       len*lenMul, depth+1);
+  if(depth<3){
+    growBranch(x2,y2, angle+spread*0.4, len*lenMul*0.85, depth+2);
+  }
+}
+
+// Main trunk splits
+growBranch(ROOT_X, ROOT_Y,  90, TRUNK_LEN, 0);
+
+// Add a few extra random offshoots for fullness
+for(let i=0;i<6;i++){
+  const t=0.4+Math.random()*0.35;
+  const bx=ROOT_X + rand(-W*0.03,W*0.03);
+  const by=ROOT_Y - TRUNK_LEN*t;
+  const side=Math.random()<.5?1:-1;
+  growBranch(bx,by, 90+side*rand(25,50), TRUNK_LEN*rand(0.25,0.38), 3);
+}
+
+// ── Photo cycling ─────────────────────────────────────────────────────────────
+// Assign photos round-robin; shuffle leaves
+let photoQueue=[...Array(PHOTOS.length).keys()];
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
+shuffle(photoQueue);
+let qIdx=0;
+
+// Active leaf: one leaf at a time shows its photo
+let activeLeafIdx = -1;
+let activePhoto   = null;     // loaded Image object
+let activeAlpha   = 0;
+let showTimer     = 0;
+const SHOW_DURATION = 180;   // frames to show photo at full alpha
+
+function nextLeaf(){
+  // pick random leaf
+  activeLeafIdx = Math.floor(Math.random()*leaves.length);
+  const pIdx = photoQueue[qIdx % photoQueue.length];
+  qIdx++;
+  if(qIdx % photoQueue.length === 0) shuffle(photoQueue); // reshuffle on repeat
+  const img = new Image();
+  img.src = PHOTOS[pIdx];
+  img.onload = ()=>{ activePhoto=img; activeAlpha=0; showTimer=0; };
+}
+
+setTimeout(nextLeaf, 1200);  // first leaf after 1.2s
+
+// ── Root words ────────────────────────────────────────────────────────────────
+// Parse message into ≤20 words; draw animated roots below trunk base
+const words = MESSAGE.trim() ? MESSAGE.trim().split(/\s+/).slice(0,20) : [];
+// Each word gets a root path: sine-wave curve going down-left or down-right
+// Pre-build root curves
+const roots=[];
+if(words.length){
+  const rootBaseY = ROOT_Y + W*0.01;
+  const rootSpacing = W / (words.length+1);
+  words.forEach((w,i)=>{
+    const side = i%2===0?-1:1;
+    const startX = ROOT_X;
+    const startY = rootBaseY;
+    const endX   = ROOT_X + side*(rootSpacing*(Math.floor(i/2)+1));
+    const endY   = rootBaseY + H*0.12 + (i%3)*H*0.025;
+    roots.push({
+      word:w, sx:startX, sy:startY, ex:endX, ey:endY,
+      progress:0, speed:0.004+Math.random()*0.003,
+      done:false, alpha:0,
+    });
+  });
+  // stagger root growth
+  roots.forEach((r,i)=>{ r.delay = i*55; });
+}
+let rootFrame=0;
+
+// ── Preload branch width helper ────────────────────────────────────────────────
+function branchWidth(depth){
+  return Math.max(1.2, (MAX_DEPTH-depth+1)*2.5 * (W/700));
+}
+
+// ── Draw heart at (cx,cy) rotated by angle, size s ───────────────────────────
+function drawHeart(cx,cy,angle,s,fillStyle,alpha=1){
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  ctx.translate(cx,cy);
+  ctx.rotate(angle*Math.PI/180);
+  ctx.beginPath();
+  // Standard heart parametric scaled to size s
+  ctx.moveTo(0,-s*0.5);
+  ctx.bezierCurveTo( s*0.8,-s*1.2,  s*1.6, s*0.3,   0,  s*1.0);
+  ctx.bezierCurveTo(-s*1.6, s*0.3, -s*0.8,-s*1.2,   0, -s*0.5);
+  ctx.fillStyle=fillStyle;
+  ctx.fill();
+  ctx.restore();
+}
+
+// ── Main animation loop ───────────────────────────────────────────────────────
+let frame=0;
+function animate(){
+  requestAnimationFrame(animate);
+  ctx.clearRect(0,0,W,H);
+  frame++;
+
+  // ── Draw branches ──────────────────────────────────────────────────────────
+  branches.forEach(b=>{
+    const grad=ctx.createLinearGradient(b.x1,b.y1,b.x2,b.y2);
+    const dark =b.depth===0?'#3b1a00':'#2a1000';
+    const light=b.depth===0?'#6b3510':'#4a2208';
+    grad.addColorStop(0,dark);grad.addColorStop(1,light);
+    ctx.beginPath();
+    ctx.moveTo(b.x1,b.y1);ctx.lineTo(b.x2,b.y2);
+    ctx.strokeStyle=grad;
+    ctx.lineWidth=branchWidth(b.depth);
+    ctx.lineCap='round';
+    ctx.stroke();
+  });
+
+  // ── Draw leaves (all, with sway) ──────────────────────────────────────────
+  leaves.forEach((lf,i)=>{
+    const sway=Math.sin(frame*0.04*lf.swaySpeed+lf.phase)*lf.swayAmp;
+    const displayAngle=lf.baseAngle-90+sway; // orient heart upright-ish
+    const isActive=(i===activeLeafIdx);
+
+    // Leaf color gradient: deep green → rose for active
+    const col = isActive
+      ? `hsl(${330+Math.sin(frame*0.05)*20},80%,55%)`
+      : `hsl(${130+Math.sin(lf.phase)*15},55%,${28+Math.sin(frame*0.03+lf.phase)*5}%)`;
+
+    drawHeart(lf.cx + Math.sin(frame*0.025*lf.swaySpeed+lf.phase)*lf.swayAmp*0.3,
+              lf.cy + Math.cos(frame*0.025*lf.swaySpeed+lf.phase)*lf.swayAmp*0.15,
+              displayAngle, lf.size, col);
+
+    // Photo display on active leaf
+    if(isActive && activePhoto){
+      showTimer++;
+      if(activeAlpha<1) activeAlpha=Math.min(1,activeAlpha+0.05);
+      if(showTimer>SHOW_DURATION) activeAlpha=Math.max(0,activeAlpha-0.04);
+      if(showTimer>SHOW_DURATION+25){
+        activePhoto=null; activeAlpha=0;
+        setTimeout(nextLeaf, 800);
+      }
+
+      if(activeAlpha>0 && activePhoto){
+        // Draw photo in a rounded rect above the leaf
+        const pw=W*0.18, ph=W*0.18;
+        const px=lf.cx-pw/2 + Math.sin(frame*0.025*lf.swaySpeed+lf.phase)*lf.swayAmp*0.3;
+        const py=lf.cy-lf.size*2-ph;
+        ctx.save();
+        ctx.globalAlpha=activeAlpha;
+        ctx.beginPath();
+        const r=10;
+        ctx.roundRect(px,py,pw,ph,r);
+        ctx.clip();
+        ctx.drawImage(activePhoto,px,py,pw,ph);
+        ctx.restore();
+        // Frame
+        ctx.save();
+        ctx.globalAlpha=activeAlpha*0.9;
+        ctx.beginPath();ctx.roundRect(px,py,pw,ph,r);
+        ctx.strokeStyle='#c9185b';ctx.lineWidth=2;ctx.stroke();
+        ctx.restore();
+      }
+    }
+  });
+
+  // ── Draw roots ────────────────────────────────────────────────────────────
+  rootFrame++;
+  roots.forEach((root,i)=>{
+    if(rootFrame < root.delay) return;
+    if(!root.done) root.progress=Math.min(1, root.progress+root.speed);
+    if(root.progress>=1) root.done=true;
+
+    const t=root.progress;
+    // Cubic bezier control points for organic root curve
+    const cx1=root.sx + (root.ex-root.sx)*0.3 + Math.sin(i*1.7)*W*0.06;
+    const cy1=root.sy + (root.ey-root.sy)*0.2 + W*0.04;
+    const cx2=root.sx + (root.ex-root.sx)*0.7 + Math.cos(i*2.1)*W*0.04;
+    const cy2=root.ey - (root.ey-root.sy)*0.15;
+
+    // Partial bezier using De Casteljau to t
+    function bezierPoint(t){
+      const mt=1-t;
+      return {
+        x: mt*mt*mt*root.sx + 3*mt*mt*t*cx1 + 3*mt*t*t*cx2 + t*t*t*root.ex,
+        y: mt*mt*mt*root.sy + 3*mt*mt*t*cy1 + 3*mt*t*t*cy2 + t*t*t*root.ey,
+      };
+    }
+
+    // Draw root path up to t
+    ctx.beginPath();
+    ctx.moveTo(root.sx,root.sy);
+    const steps=40;
+    for(let s=1;s<=steps;s++){
+      const pt=bezierPoint((s/steps)*t);
+      ctx.lineTo(pt.x,pt.y);
+    }
+    ctx.strokeStyle='#5c3010';
+    ctx.lineWidth=Math.max(1.5,(MAX_DEPTH-2)*1.2*(W/700));
+    ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.stroke();
+
+    // Word at end of root when fully grown
+    if(root.progress>0.92){
+      root.alpha=Math.min(1,(root.progress-0.92)/0.08);
+      const ep=bezierPoint(1);
+      ctx.save();
+      ctx.globalAlpha=root.alpha;
+      ctx.font=`italic ${Math.round(W*0.022)}px 'Dancing Script', cursive`;
+      ctx.fillStyle='#f5c842';
+      ctx.textAlign='center';
+      ctx.shadowColor='rgba(212,168,83,.8)';
+      ctx.shadowBlur=8;
+      ctx.fillText(root.word, ep.x, ep.y+4);
+      ctx.restore();
+    }
+  });
+}
+
+animate();
+
+// ── Click leaf to show photo full-screen ──────────────────────────────────────
+canvas.addEventListener('click', e=>{
+  const rect=canvas.getBoundingClientRect();
+  const mx=(e.clientX-rect.left)*(W/rect.width);
+  const my=(e.clientY-rect.top)*(H/rect.height);
+  leaves.forEach((lf,i)=>{
+    const dx=mx-lf.cx, dy=my-lf.cy;
+    if(Math.sqrt(dx*dx+dy*dy)<lf.size*2){
+      const pi=photoQueue[(qIdx+i)%PHOTOS.length];
+      document.getElementById('modalImg').src=PHOTOS[pi];
+      document.getElementById('photoModal').classList.add('show');
+    }
+  });
+});
+</script>
+</body>
+</html>
