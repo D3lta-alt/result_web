@@ -306,18 +306,26 @@ body {
   padding: 1.5rem;
   box-shadow: var(--shadow-md);
 }
-.search-form { display: grid; grid-template-columns: 1fr; gap: 1rem; align-items: end; }
+.search-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: end;
+}
 @media (min-width: 600px) {
   .search-form { grid-template-columns: 1fr 1fr; }
   .btn-search  { grid-column: span 2; justify-self: start; }
 }
-@media (min-width: 800px) {
-  .content-area:not(.has-results) .search-form { grid-template-columns: 1fr 1fr auto; }
-  .content-area:not(.has-results) .btn-search  { grid-column: auto; justify-self: auto; }
+@media (min-width: 900px) {
+  .content-area:not(.has-results) .search-form {
+    grid-template-columns: 1fr 1fr 1fr auto;
+  }
+  .content-area:not(.has-results) .btn-search { grid-column: auto; justify-self: auto; }
 }
 
-.field-group { display: flex; flex-direction: column; gap: .4rem; }
+.field-group { display: flex; flex-direction: column; gap: .3rem; }
 .field-group label { font-size: .78rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-500); }
+.field-hint { font-size: .72rem; color: var(--ink-300); font-style: italic; }
 .field-group input,
 .year-select {
   font-family: var(--font-body); font-size: .9rem; color: var(--ink-700);

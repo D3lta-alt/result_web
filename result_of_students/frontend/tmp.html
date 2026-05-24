@@ -24,7 +24,6 @@
         <span class="logo-text">Academia</span>
       </button>
       <nav class="header-nav" aria-label="Main navigation">
-        <span class="nav-badge">Dashboard</span>
       </nav>
     </div>
   </header>
@@ -113,9 +112,10 @@
           <h2 id="hint-title">How to Search</h2>
         </header>
         <ul class="hint-list">
-          <li><span class="hint-tag">Name</span> Enter a full or partial name — e.g. <code>Ali</code> or <code>Sharma</code></li>
+          <li><span class="hint-tag">Name</span> Letters only, no numbers or symbols allowed</li>
+          <li><span class="hint-tag">DOB</span> Enter date of birth of the student (DD/MM/YYYY)</li>
           <li><span class="hint-tag">Year (B.S.)</span> Select a Nepali passing year to narrow results — e.g. <code>2080</code></li>
-          <li><span class="hint-tag">Search</span> Leave both fields empty to retrieve all students in the registry.</li>
+          <li><span class="hint-tag">Search</span> Leave all fields empty to retrieve all students in the registry.</li>
         </ul>
       </section>
 
@@ -123,8 +123,23 @@
         <h2 id="form-title" class="sr-only">Search Form</h2>
         <form id="searchForm" class="search-form" novalidate>
           <div class="field-group">
-            <label for="nameInput">Student name</label>
-            <input type="text" id="nameInput" name="name" placeholder="Enter student name…" autocomplete="off" spellcheck="false"/>
+            <label for="nameInput">Student full name</label>
+            <input type="text" id="nameInput" name="name"
+              placeholder="E.G. ANANYA SHARMA"
+              autocomplete="off" spellcheck="false"
+              inputmode="text"
+              aria-describedby="nameHint"/>
+            <span class="field-hint" id="nameHint">Letters only — auto uppercased</span>
+          </div>
+          <div class="field-group">
+            <label for="dobInput">Date of birth</label>
+            <input type="text" id="dobInput" name="dob"
+              placeholder="DD/MM/YYYY"
+              maxlength="10"
+              inputmode="numeric"
+              autocomplete="off"
+              aria-describedby="dobHint"/>
+            <span class="field-hint" id="dobHint">Format: DD/MM/YYYY</span>
           </div>
           <div class="field-group">
             <label for="yearInput">Passing year (B.S.)</label>

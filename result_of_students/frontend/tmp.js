@@ -113,6 +113,7 @@ let activeRow      = null;
 /* ── DOM refs ────────────────────────────────────────── */
 const form         = document.getElementById("searchForm");
 const nameInput    = document.getElementById("nameInput");
+const dobInput     = document.getElementById("dobInput");
 const yearInput    = document.getElementById("yearInput");
 const messageArea  = document.getElementById("messageArea");
 const tableBody    = document.getElementById("tableBody");
@@ -136,6 +137,49 @@ const msTotalCr      = document.getElementById("ms-total-cr");
 const msCgpa         = document.getElementById("ms-cgpa");
 const msIssueDate    = document.getElementById("ms-issue-date");
 
+/* ── Name input: letters + spaces only, auto-uppercase ── */
+nameInput.addEventListener("input", () => {
+  const pos = nameInput.selectionStart;
+  /* Strip anything that isn't a letter or space */
+  const clean = nameInput.value.replace(/[^a-zA-Z\s]/g, "").toUpperCase();
+  if (nameInput.value !== clean) {
+    nameInput.value = clean;
+    /* Restore cursor position after value change */
+    nameInput.setSelectionRange(pos, pos);
+  }
+});
+nameInput.addEventListener("keydown", (e) => {
+  /* Block digits and symbols at the keydown level for immediate feedback */
+  if (e.key.length === 1 && /[^a-zA-Z\s]/.test(e.key)) {
+    e.preventDefault();
+  }
+});
+
+/* ── DOB input: auto-format as DD/MM/YYYY ────────────── */
+dobInput.addEventListener("input", (e) => {
+  /* Strip everything except digits */
+  let raw = dobInput.value.replace(/\D/g, "");
+  /* Limit to 8 digits (DDMMYYYY) */
+  if (raw.length > 8) raw = raw.slice(0, 8);
+  /* Insert slashes */
+  let formatted = raw;
+  if (raw.length > 4) {
+    formatted = raw.slice(0, 2) + "/" + raw.slice(2, 4) + "/" + raw.slice(4);
+  } else if (raw.length > 2) {
+    formatted = raw.slice(0, 2) + "/" + raw.slice(2);
+  }
+  dobInput.value = formatted;
+});
+dobInput.addEventListener("keydown", (e) => {
+  /* Only allow digits, backspace, delete, arrow keys, tab */
+  if (
+    e.key.length === 1 &&
+    !/\d/.test(e.key)
+  ) {
+    e.preventDefault();
+  }
+});
+
 /* ── Seed empty marksheet on load ────────────────────── */
 (function seedEmptyMarksheet() {
   const frag = document.createDocumentFragment();
@@ -155,6 +199,7 @@ const msIssueDate    = document.getElementById("ms-issue-date");
 /* ── Logo → full reset ───────────────────────────────── */
 logoBtn.addEventListener("click", () => {
   nameInput.value = "";
+  dobInput.value  = "";
   yearInput.value = "";
   clearTable();
   clearMessage();
@@ -177,12 +222,12 @@ async function handleSearch(event) {
   event.preventDefault();
 
   const name = nameInput.value.trim();
+  const dob  = dobInput.value.trim();
   const year = yearInput.value.trim();
 
   showLoading("Searching the registry…");
   clearTable();
   resetPagination();
-  /* Collapse marksheet while new search runs */
   contentArea.classList.remove("has-results");
   marksheetPanel.setAttribute("aria-hidden", "true");
   clearMarksheet();
@@ -190,7 +235,7 @@ async function handleSearch(event) {
   activeRow     = null;
 
   try {
-    const results = await fetchStudents(name, year ? parseInt(year, 10) : null);
+    const results = await fetchStudents(name, dob, year ? parseInt(year, 10) : null);
     currentData = results;
     currentPage = 1;
 
@@ -200,10 +245,8 @@ async function handleSearch(event) {
       showMessage("success", `Found ${results.length} student${results.length !== 1 ? "s" : ""}. Click a row to view marksheet.`);
       renderPage(currentPage);
       updatePagination();
-      /* Expand the split layout */
       contentArea.classList.add("has-results");
       marksheetPanel.setAttribute("aria-hidden", "false");
-      /* Auto-select first student */
       const firstRow = tableBody.querySelector("tr");
       if (firstRow) firstRow.click();
     }
@@ -214,14 +257,19 @@ async function handleSearch(event) {
 }
 
 /* ── Fetch (mock) ────────────────────────────────────── */
-function fetchStudents(name, year) {
+function fetchStudents(name, dob, year) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       try {
         const results = MOCK_STUDENTS.filter((s) => {
-          const matchName = name ? s.name.toLowerCase().includes(name.toLowerCase()) : true;
+          const matchName = name
+            ? s.name.toUpperCase().includes(name.toUpperCase())
+            : true;
+          const matchDob = dob
+            ? generateDOB(s) === dob
+            : true;
           const matchYear = year !== null ? s.passing_year === year : true;
-          return matchName && matchYear;
+          return matchName && matchDob && matchYear;
         });
         resolve(results);
       } catch (e) { reject(e); }
