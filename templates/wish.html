@@ -322,7 +322,7 @@ function cubicBez(p0,p1,p2,p3,t){
 
 function drawBeam(){
   if(!beam) return;
-  beam.t+=0.018;
+  beam.t+=0.0167; // 1 s travel time at 60 fps (1/60 ≈ 0.0167)
   if(beam.t<1){
     // Spawn trail particles
     for(var k=0;k<3;k++){
@@ -399,7 +399,7 @@ function drawBurst(){
 // State machine: idle → beam → fadein → hold → fadeout → idle
 //
 // SHOW_DUR ≈ 3 s at 60 fps. Fade in/out 0.5 s each.
-var SHOW_DUR  = 180;   // hold frames  (3 s @ 60 fps)
+var SHOW_DUR  = 120;   // hold frames  (2 s @ 60 fps)
 var FADE_IN   =  30;   // fade-in frames  (0.5 s)
 var FADE_OUT  =  30;   // fade-out frames (0.5 s)
 
