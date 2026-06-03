@@ -508,7 +508,7 @@ function advancePhotoState(){
     if(showTimer>=FADE_OUT){
       activeAlpha=0;currentImg=null;showTimer=0;photoPhase="idle";
       if(pendingTimeout) clearTimeout(pendingTimeout);
-      pendingTimeout=setTimeout(loadNextPhoto,100);
+      pendingTimeout=setTimeout(loadNextPhoto,500);
     }
   }
 }
