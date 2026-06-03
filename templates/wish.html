@@ -494,7 +494,7 @@ function loadNextPhoto(){
 
 // Called ONCE per frame (not twice) — fixes double-speed bug
 function advancePhotoState(){
-  if(photoPhase==="fadein"){
+  if(photoPhase==="idle") return;
     showTimer++;
     activeAlpha=Math.min(1,showTimer/FADE_IN);
     if(showTimer>=FADE_IN){showTimer=0;photoPhase="hold";}
@@ -718,8 +718,8 @@ function animate(){
       la*depthDim,glowPx);
   }
 
-  // Advance photo state ONCE per frame
-  if(photoPhase!=="idle") advancePhotoState();
+  // Advance photo state every frame — always, not just when non-idle
+  advancePhotoState();
 
   drawBeam();
   updateBurst();drawBurst();
