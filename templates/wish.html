@@ -70,8 +70,8 @@ function resize(){
   W=canvas.width=window.innerWidth;
   H=canvas.height=window.innerHeight;
   ROOT_X=W*0.5;
-  ROOT_Y=H*0.82;
-  TRUNK_L=clamp(Math.min(H*0.22,W*0.20),60,260);
+  ROOT_Y=H*0.88;
+  TRUNK_L=clamp(Math.min(H*0.20,W*0.18),60,240);
   buildTree();
   buildRoots();
   makeStars();
@@ -322,7 +322,7 @@ function cubicBez(p0,p1,p2,p3,t){
 
 function drawBeam(){
   if(!beam) return;
-  beam.t+=0.0167; // 1 s travel time at 60 fps (1/60 ≈ 0.0167)
+  beam.t+=0.033; // 0.5 s travel time at 60 fps
   if(beam.t<1){
     // Spawn trail particles
     for(var k=0;k<3;k++){
@@ -399,9 +399,9 @@ function drawBurst(){
 // State machine: idle → beam → fadein → hold → fadeout → idle
 //
 // SHOW_DUR ≈ 3 s at 60 fps. Fade in/out 0.5 s each.
-var SHOW_DUR  = 150;   // hold frames  (2.5 s @ 60 fps) — total cycle = 3.5 s with fades
-var FADE_IN   =  30;   // fade-in frames  (0.5 s)
-var FADE_OUT  =  30;   // fade-out frames (0.5 s)
+var SHOW_DUR  = 180;   // hold frames  (3 s @ 60 fps) — total cycle with beam+fades = 5 s
+var FADE_IN   =  30;   // fade-in  (0.5 s)
+var FADE_OUT  =  30;   // fade-out (0.5 s)
 
 var photoQueue=[];
 function shuffleQueue(){
