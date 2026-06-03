@@ -227,7 +227,7 @@ function buildTree(){
       phase:rand(0,Math.PI*2),
       swayAmp:rand(2,9), swaySpeed:rand(0.5,1.3),
       baseAngle:t.angle,
-      rs:0.58, re:0.72
+      rs:0.64, re:0.72
     });
   });
 }
@@ -399,7 +399,7 @@ function drawBurst(){
 // State machine: idle → beam → fadein → hold → fadeout → idle
 //
 // SHOW_DUR ≈ 3 s at 60 fps. Fade in/out 0.5 s each.
-var SHOW_DUR  = 120;   // hold frames  (2 s @ 60 fps)
+var SHOW_DUR  = 150;   // hold frames  (2.5 s @ 60 fps) — total cycle = 3.5 s with fades
 var FADE_IN   =  30;   // fade-in frames  (0.5 s)
 var FADE_OUT  =  30;   // fade-out frames (0.5 s)
 
@@ -508,7 +508,7 @@ function advancePhotoState(){
     if(showTimer>=FADE_OUT){
       activeAlpha=0;currentImg=null;showTimer=0;photoPhase="idle";
       if(pendingTimeout) clearTimeout(pendingTimeout);
-      pendingTimeout=setTimeout(loadNextPhoto,600);
+      pendingTimeout=setTimeout(loadNextPhoto,100);
     }
   }
 }
@@ -631,11 +631,11 @@ function animate(){
   }
 
   // ── Roots — left to right in order ───────────────────────────────────────
-  if(bp>0.68){
+  if(bp>0.18){
     for(var ri=0;ri<roots.length;ri++){
       var r=roots[ri];
-      var rootStart=0.70+ri*0.022;
-      var localBP=clamp((bp-rootStart)/0.15,0,1);
+      var rootStart=0.18+ri*0.018;
+      var localBP=clamp((bp-rootStart)/0.20,0,1);
       if(localBP<=0) continue;
       r.progress=Math.min(1,r.progress+0.005);
       var drawT=r.progress*localBP;
@@ -725,9 +725,9 @@ function animate(){
   drawPhotoFrame();
 
   // Kick off photo cycle
-  if(!firstScheduled&&bp>0.60&&leaves.length>0&&PHOTOS.length>0){
+  if(!firstScheduled&&bp>0.97&&leaves.length>0&&PHOTOS.length>0){
     firstScheduled=true;
-    setTimeout(loadNextPhoto,800);
+    setTimeout(loadNextPhoto,0);
   }
 
   drawBeam();
