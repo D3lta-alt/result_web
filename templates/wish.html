@@ -322,7 +322,7 @@ function cubicBez(p0,p1,p2,p3,t){
 
 function drawBeam(){
   if(!beam) return;
-  beam.t+=0.033; // 0.5 s travel time at 60 fps
+  beam.t+=0.083; // ~0.2 s travel time at 60 fps — instant departure feel
   if(beam.t<1){
     // Spawn trail particles
     for(var k=0;k<3;k++){
@@ -399,7 +399,7 @@ function drawBurst(){
 // State machine: idle → beam → fadein → hold → fadeout → idle
 //
 // SHOW_DUR ≈ 3 s at 60 fps. Fade in/out 0.5 s each.
-var SHOW_DUR  = 180;   // hold frames  (3 s @ 60 fps) — total cycle with beam+fades = 5 s
+var SHOW_DUR  = 120;   // hold frames  (2 s @ 60 fps) — reduced by 1 s
 var FADE_IN   =  30;   // fade-in  (0.5 s)
 var FADE_OUT  =  30;   // fade-out (0.5 s)
 
@@ -725,9 +725,9 @@ function animate(){
   drawPhotoFrame();
 
   // Kick off photo cycle
-  if(!firstScheduled&&bp>0.97&&leaves.length>0&&PHOTOS.length>0){
+  if(!firstScheduled&&bp>=1.0&&leaves.length>0&&PHOTOS.length>0){
     firstScheduled=true;
-    setTimeout(loadNextPhoto,0);
+    loadNextPhoto(); // zero delay — light departs immediately
   }
 
   drawBeam();
