@@ -725,8 +725,9 @@ function animate(){
   drawPhotoFrame();
 
   // Kick off photo cycle
-  if(!firstScheduled&&bp>=1.0&&leaves.length>0&&PHOTOS.length>0){
+  if(!firstScheduled&&bp>=0.75&&leaves.length>0&&PHOTOS.length>0){
     firstScheduled=true;
+    setTimeout(loadNextPhoto,2000); // 2 s after tree looks complete
     loadNextPhoto(); // zero delay — light departs immediately
   }
 
