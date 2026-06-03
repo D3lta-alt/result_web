@@ -721,18 +721,17 @@ function animate(){
   // Advance photo state ONCE per frame
   if(photoPhase!=="idle") advancePhotoState();
 
-  // Draw photo frame on top of leaves
-  drawPhotoFrame();
-
-  // Kick off photo cycle
-  if(!firstScheduled&&bp>=0.75&&leaves.length>0&&PHOTOS.length>0){
-    firstScheduled=true;
-    setTimeout(loadNextPhoto,2000); // 2 s after tree looks complete
-    loadNextPhoto(); // zero delay — light departs immediately
-  }
-
   drawBeam();
   updateBurst();drawBurst();
+
+  // Draw photo frame on top of everything
+  drawPhotoFrame();
+
+  // Kick off photo cycle — single call, 2s after tree looks complete
+  if(!firstScheduled&&bp>=0.75&&leaves.length>0&&PHOTOS.length>0){
+    firstScheduled=true;
+    setTimeout(loadNextPhoto,2000);
+  }
 }
 
 resize();
