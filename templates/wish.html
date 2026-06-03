@@ -33,6 +33,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;}
 (function(){
 try{
 
+// --- SYNC WITH APP.PY ---
 var PHOTOS    = {{ photos_json|safe }};
 var MESSAGE   = {{ message|tojson }};
 var RECIPIENT = {{ recipient|tojson }};
@@ -47,13 +48,8 @@ var MAX_DEPTH=8;
 function rand(a,b){return a+Math.random()*(b-a);}
 function lerp(a,b,t){return a+(b-a)*t;}
 function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function fs(frac){ return clamp(Math.min(W,H)*frac,11,72); }
 
-// Responsive font size scales with shortest viewport side
-function fs(frac){
-  return clamp(Math.min(W,H)*frac,11,72);
-}
-
-// Rounded rectangle path helper
 function rr(x,y,w,h,r){
   r=Math.min(r,w/2,h/2);
   ctx.beginPath();
@@ -65,7 +61,6 @@ function rr(x,y,w,h,r){
   ctx.closePath();
 }
 
-// ── Resize + rebuild ──────────────────────────────────────────────────────────
 function resize(){
   W=canvas.width=window.innerWidth;
   H=canvas.height=window.innerHeight;
@@ -80,7 +75,7 @@ function resize(){
 }
 window.addEventListener("resize",resize);
 
-// ── Stars ─────────────────────────────────────────────────────────────────────
+// --- BACKGROUNDS ---
 var stars=[];
 function makeStars(){
   stars=[];
@@ -100,7 +95,6 @@ function drawStars(){
   }
 }
 
-// ── Dust ──────────────────────────────────────────────────────────────────────
 var dust=[];
 function makeDust(){
   dust=[];
@@ -129,7 +123,6 @@ function drawDust(){
   }
 }
 
-// ── Petals — same shape/behaviour as index.html ───────────────────────────────
 var petals=[];
 function newPetal(init){
   return{
@@ -167,409 +160,123 @@ function drawPetals(){
   }
 }
 
-// ── Tree — uniform leaf density at every depth ────────────────────────────────
+// --- TREE LOGIC ---
 function buildTree(){
-  branches=[];leaves=[];
+  branches=[]; leaves=[];
   var tipNodes=[];
-
   function grow(x,y,angle,len,depth){
     if(depth>MAX_DEPTH||len<4) return;
     var rad=angle*Math.PI/180;
     var x2=x+Math.cos(rad)*len, y2=y-Math.sin(rad)*len;
-
-    // Progressive reveal: deeper branches appear later
     var ph=depth/(MAX_DEPTH+1);
     var rs=0.18+ph*0.28;
     var re=rs+0.18;
-
-    branches.push({
-      x1:x,y1:y,x2:x2,y2:y2,depth:depth,
-      rs:rs,re:re,
-      ax:Math.cos(rad),ay:-Math.sin(rad),len:len
-    });
-
+    branches.push({x1:x,y1:y,x2:x2,y2:y2,depth:depth,rs:rs,re:re,ax:Math.cos(rad),ay:-Math.sin(rad),len:len});
     if(depth===MAX_DEPTH){
       tipNodes.push({cx:x2,cy:y2,angle:angle,depth:depth});
       return;
     }
-
-    // Spread decreases with depth → upper branches naturally spread out
     var spread=lerp(42,14,depth/MAX_DEPTH);
-    // Length ratio increases with depth → upper branches relatively longer
     var lm=lerp(0.72,0.80,depth/MAX_DEPTH);
-
     grow(x2,y2,angle+spread,len*lm,depth+1);
     grow(x2,y2,angle-spread,len*lm,depth+1);
-
-    // Mid-branch only in lower half for balanced density
-    if(depth<4&&Math.random()>0.45)
-      grow(x2,y2,angle+rand(-spread*0.3,spread*0.3),len*lm*0.68,depth+2);
+    if(depth<4&&Math.random()>0.45) grow(x2,y2,angle+rand(-spread*0.3,spread*0.3),len*lm*0.68,depth+2);
   }
-
   grow(ROOT_X,ROOT_Y,90,TRUNK_L,0);
-
-  // Side branches on trunk for full canopy coverage
-  var numSide=clamp(Math.floor(W/180),4,8);
-  for(var i=0;i<numSide;i++){
-    var frac=0.25+Math.random()*0.55;
-    var by=ROOT_Y-TRUNK_L*frac;
-    var side=i%2===0?1:-1;
-    grow(ROOT_X,by,90+side*rand(20,52),TRUNK_L*rand(0.30,0.50),2);
-  }
-
-  // Place leaves uniformly — all tips, same reveal window
-  var baseLeafSize=clamp(Math.min(W,H)*0.016,8,22);
+  var baseLeafSize=fs(0.018);
   tipNodes.forEach(function(t){
-    leaves.push({
-      cx:t.cx, cy:t.cy,
-      size:baseLeafSize*rand(0.75,1.35),
-      hue:[330,340,350,320,308,338][Math.floor(rand(0,6))],
-      phase:rand(0,Math.PI*2),
-      swayAmp:rand(2,9), swaySpeed:rand(0.5,1.3),
-      baseAngle:t.angle,
-      rs:0.64, re:0.72
-    });
+    leaves.push({cx:t.cx, cy:t.cy, size:baseLeafSize*rand(0.75,1.35), hue:[330,340,350,320,308,338][Math.floor(rand(0,6))], phase:rand(0,Math.PI*2), swayAmp:rand(2,9), swaySpeed:rand(0.5,1.3), baseAngle:t.angle, rs:0.64, re:0.72 });
   });
 }
 
-// ── Roots — LEFT-TO-RIGHT word ordering ──────────────────────────────────────
-// FIX: old code alternated left/right (even=left, odd=right) which placed
-// word[0] on left, word[1] on right → "HAPPY BIRTHDAY" appeared reordered.
-// New: sort left→right naturally: words are placed sequentially across
-// a fan of root lines, leftmost first.
 var rootWords=MESSAGE.trim()?MESSAGE.trim().split(/\s+/).slice(0,20):[];
 function buildRoots(){
   roots=[];
   if(!rootWords.length) return;
-
   var n=rootWords.length;
   var baseY=ROOT_Y+clamp(H*0.010,6,16);
   var maxSpread=W*0.36;
-
   for(var i=0;i<n;i++){
-    // Distribute evenly left to right: -1 → +1 across the spread
-    var norm=n===1?0:(i/(n-1))*2-1;  // -1 (leftmost) to +1 (rightmost)
+    var norm=n===1?0:(i/(n-1))*2-1;
     var ex=ROOT_X+norm*maxSpread;
-
-    // Outer roots drop further
     var depthFactor=Math.abs(norm);
-    var ey=baseY
-      +clamp(H*0.045,16,70)
-      +depthFactor*clamp(H*0.040,14,56);
-
-    // Control points for organic bezier curve
+    var ey=baseY+clamp(H*0.045,16,70)+depthFactor*clamp(H*0.040,14,56);
     var cx1=ROOT_X+norm*clamp(W*0.05,16,60);
     var cy1=baseY+clamp(H*0.025,8,36);
     var cx2=ex-norm*clamp(W*0.03,10,40);
     var cy2=ey-clamp(H*0.018,6,24);
-
-    roots.push({
-      word:rootWords[i],
-      sx:ROOT_X, sy:baseY,
-      ex:ex, ey:ey,
-      cx1:cx1, cy1:cy1,
-      cx2:cx2, cy2:cy2,
-      progress:0,
-      pulseOffset:rand(0,Math.PI*2)
-    });
+    roots.push({word:rootWords[i],sx:ROOT_X, sy:baseY,ex:ex, ey:ey,cx1:cx1, cy1:cy1,cx2:cx2, cy2:cy2,progress:0,pulseOffset:rand(0,Math.PI*2)});
   }
 }
 
 function bez(r,t){
   var mt=1-t;
-  return{
-    x:mt*mt*mt*r.sx+3*mt*mt*t*r.cx1+3*mt*t*t*r.cx2+t*t*t*r.ex,
-    y:mt*mt*mt*r.sy+3*mt*mt*t*r.cy1+3*mt*t*t*r.cy2+t*t*t*r.ey
-  };
+  return{ x:mt*mt*mt*r.sx+3*mt*mt*t*r.cx1+3*mt*t*t*r.cx2+t*t*t*r.ex, y:mt*mt*mt*r.sy+3*mt*mt*t*r.cy1+3*mt*t*t*r.cy2+t*t*t*r.ey };
 }
 
-// ── Heart helper ──────────────────────────────────────────────────────────────
 function heart(x,y,a,s,c,alpha,glowSize){
-  glowSize=glowSize||12;
   ctx.save();ctx.globalAlpha=clamp(alpha,0,1);
   ctx.translate(x,y);ctx.rotate(a*Math.PI/180);
   ctx.beginPath();ctx.moveTo(0,-s*0.45);
   ctx.bezierCurveTo(s*0.75,-s*1.15,s*1.55,s*0.25,0,s*0.95);
   ctx.bezierCurveTo(-s*1.55,s*0.25,-s*0.75,-s*1.15,0,-s*0.45);
-  ctx.fillStyle=c;ctx.shadowColor=c;ctx.shadowBlur=glowSize;
+  ctx.fillStyle=c;ctx.shadowColor=c;ctx.shadowBlur=glowSize||12;
   ctx.fill();ctx.restore();
 }
 
-// ── Beam — light travelling from root to leaf ─────────────────────────────────
-var beam=null;
-var beamParticles=[];
+// --- PHOTO SYSTEM ---
+var beam=null, beamParticles=[], photoQueue=[], photoIndex=0, activeLeaf=-1, currentImg=null, showTimer=0, photoPhase="idle", activeAlpha=0, firstScheduled=false, pendingTimeout=null;
+var frameX=0, frameY=0, frameW=0;
+var SHOW_DUR=120, FADE_IN=30, FADE_OUT=30;
+
+function shuffleQueue(){ photoQueue=PHOTOS.map((_,i)=>i).sort(()=>Math.random()-0.5); }
+shuffleQueue();
 
 function triggerBeam(leafIdx,cb){
   var lf=leaves[leafIdx];
-  if(!lf){cb();return;}
-  beam={
-    t:0, idx:leafIdx, cb:cb,
-    p0:{x:ROOT_X, y:ROOT_Y+H*0.01},
-    p1:{x:ROOT_X+rand(-W*0.08,W*0.08), y:ROOT_Y-TRUNK_L*0.5},
-    p2:{x:lerp(ROOT_X,lf.cx,0.5)+rand(-W*0.06,W*0.06), y:lerp(ROOT_Y,lf.cy,0.5)-H*0.04},
-    p3:{x:lf.cx, y:lf.cy}
-  };
-  beamParticles=[];
+  beam={t:0, idx:leafIdx, cb:cb, p0:{x:ROOT_X, y:ROOT_Y}, p1:{x:ROOT_X, y:ROOT_Y-TRUNK_L}, p2:{x:lf.cx, y:lf.cy-50}, p3:{x:lf.cx, y:lf.cy}};
 }
 
 function cubicBez(p0,p1,p2,p3,t){
   var mt=1-t;
-  return{
-    x:mt*mt*mt*p0.x+3*mt*mt*t*p1.x+3*mt*t*t*p2.x+t*t*t*p3.x,
-    y:mt*mt*mt*p0.y+3*mt*mt*t*p1.y+3*mt*t*t*p2.y+t*t*t*p3.y
-  };
-}
-
-function drawBeam(){
-  if(!beam) return;
-  beam.t+=0.083; // ~0.2 s travel time at 60 fps — instant departure feel
-  if(beam.t<1){
-    // Spawn trail particles
-    for(var k=0;k<3;k++){
-      var tt=Math.max(0,beam.t-k*0.02);
-      var pp=cubicBez(beam.p0,beam.p1,beam.p2,beam.p3,tt);
-      beamParticles.push({
-        x:pp.x+rand(-3,3), y:pp.y+rand(-3,3),
-        vx:rand(-0.4,0.4), vy:rand(-0.4,0.4),
-        life:1, decay:rand(0.04,0.08),
-        r:rand(2,5), hue:rand(290,340)
-      });
-    }
-    // Bright head
-    var hp=cubicBez(beam.p0,beam.p1,beam.p2,beam.p3,beam.t);
-    ctx.save();ctx.globalAlpha=1;
-    ctx.beginPath();ctx.arc(hp.x,hp.y,9,0,Math.PI*2);
-    ctx.fillStyle="#fff";ctx.shadowColor="#ff88ee";ctx.shadowBlur=45;
-    ctx.fill();ctx.restore();
-  }
-  // Draw + age particles
-  for(var i=beamParticles.length-1;i>=0;i--){
-    var bp=beamParticles[i];
-    bp.x+=bp.vx; bp.y+=bp.vy; bp.life-=bp.decay;
-    if(bp.life<=0){beamParticles.splice(i,1);continue;}
-    ctx.save();ctx.globalAlpha=bp.life*0.85;
-    ctx.beginPath();ctx.arc(bp.x,bp.y,bp.r*bp.life,0,Math.PI*2);
-    var col="hsl("+bp.hue+",90%,80%)";
-    ctx.fillStyle=col;ctx.shadowColor=col;ctx.shadowBlur=12;
-    ctx.fill();ctx.restore();
-  }
-  if(beam.t>=1){
-    var cb=beam.cb, idx=beam.idx;
-    beam=null;
-    if(leaves[idx]) spawnBurst(leaves[idx].cx,leaves[idx].cy);
-    cb();
-  }
-}
-
-// ── Burst — mini heart explosion ──────────────────────────────────────────────
-var burst=[];
-function spawnBurst(x,y){
-  for(var i=0;i<30;i++){
-    var a=rand(0,Math.PI*2), sp=rand(1.5,5.5);
-    burst.push({
-      x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.5,
-      life:1,decay:rand(0.020,0.035),size:rand(3,6),hue:rand(315,360)
-    });
-  }
-}
-function updateBurst(){
-  for(var i=burst.length-1;i>=0;i--){
-    var b=burst[i];
-    b.x+=b.vx;b.y+=b.vy;b.vy+=0.08;b.life-=b.decay;
-    if(b.life<=0) burst.splice(i,1);
-  }
-}
-function drawBurst(){
-  for(var i=0;i<burst.length;i++){
-    var b=burst[i];
-    ctx.save();ctx.globalAlpha=b.life*0.9;
-    ctx.translate(b.x,b.y);
-    var s=b.size;
-    ctx.beginPath();ctx.moveTo(0,-s*0.45);
-    ctx.bezierCurveTo(s*0.75,-s*1.15,s*1.55,s*0.25,0,s*0.95);
-    ctx.bezierCurveTo(-s*1.55,s*0.25,-s*0.75,-s*1.15,0,-s*0.45);
-    ctx.fillStyle="hsl("+b.hue+",90%,72%)";
-    ctx.shadowColor="hsl("+b.hue+",90%,72%)";ctx.shadowBlur=8;
-    ctx.fill();ctx.restore();
-  }
-}
-
-// ── Photo system — smooth 3-second cycle, frame inside canopy ─────────────────
-//
-// State machine: idle → beam → fadein → hold → fadeout → idle
-//
-// SHOW_DUR ≈ 3 s at 60 fps. Fade in/out 0.5 s each.
-var SHOW_DUR  = 120;   // hold frames  (2 s @ 60 fps) — reduced by 1 s
-var FADE_IN   =  30;   // fade-in  (0.5 s)
-var FADE_OUT  =  30;   // fade-out (0.5 s)
-
-var photoQueue=[];
-function shuffleQueue(){
-  photoQueue=[];
-  for(var i=0;i<PHOTOS.length;i++) photoQueue.push(i);
-  for(var si=photoQueue.length-1;si>0;si--){
-    var sj=Math.floor(Math.random()*(si+1));
-    var tmp=photoQueue[si];photoQueue[si]=photoQueue[sj];photoQueue[sj]=tmp;
-  }
-}
-shuffleQueue();
-var photoIndex=0;
-function nextPhotoIdx(){
-  if(photoIndex>=photoQueue.length){photoIndex=0;shuffleQueue();}
-  return photoQueue[photoIndex++];
-}
-
-// Photo state
-var activeLeaf   = -1;
-var currentImg   = null;
-var showTimer    = 0;
-var photoPhase   = "idle"; // idle | fadein | hold | fadeout
-var activeAlpha  = 0;
-var firstScheduled = false;
-var pendingTimeout = null;
-
-// Photo frame position — stored so it doesn't jump while fading
-var frameX=0, frameY=0, frameW=0;
-
-// Pick a leaf that is well inside the canopy (not at the very edge).
-// Strategy: prefer leaves whose Y is in the upper 60% of the canopy,
-// and whose X is not within 15% of viewport edges.
-function pickCanopyLeaf(){
-  if(!leaves.length) return 0;
-  // Build candidate list
-  var canopyTop=ROOT_Y-TRUNK_L;
-  var canopyBot=ROOT_Y-TRUNK_L*0.10;
-  var candidates=[];
-  for(var i=0;i<leaves.length;i++){
-    var lf=leaves[i];
-    var inYBand=(lf.cy>=canopyTop&&lf.cy<=canopyBot);
-    var inXBand=(lf.cx>W*0.10&&lf.cx<W*0.90);
-    if(inYBand&&inXBand) candidates.push(i);
-  }
-  if(!candidates.length) return Math.floor(Math.random()*leaves.length);
-  return candidates[Math.floor(Math.random()*candidates.length)];
-}
-
-// Compute frame position anchored inside/beside the selected leaf cluster.
-// The frame is placed adjacent to the leaf, biased toward centre of canopy,
-// clamped fully within viewport.
-function computeFramePos(leafIdx){
-  var lf=leaves[leafIdx];
-  var pw=clamp(Math.min(W,H)*0.22,70,200);
-
-  // Prefer placing frame just below or beside the leaf
-  // so it sits naturally within branch area
-  var px=lf.cx-pw/2;
-  var py=lf.cy+lf.size*1.5+6;
-
-  // If that would go below canopy base, place above instead
-  if(py+pw>ROOT_Y-TRUNK_L*0.08) py=lf.cy-pw-lf.size*1.5-6;
-
-  // Clamp to viewport with margin
-  var margin=12;
-  px=clamp(px,margin,W-pw-margin);
-  py=clamp(py,margin,H-pw-margin);
-
-  return{x:px,y:py,w:pw};
+  return{ x:mt*mt*mt*p0.x+3*mt*mt*t*p1.x+3*mt*t*t*p2.x+t*t*t*p3.x, y:mt*mt*mt*p0.y+3*mt*mt*t*p1.y+3*mt*t*t*p2.y+t*t*t*p3.y };
 }
 
 function loadNextPhoto(){
   if(!PHOTOS.length||!leaves.length) return;
-  activeLeaf=pickCanopyLeaf();
-  var pos=computeFramePos(activeLeaf);
-  frameX=pos.x; frameY=pos.y; frameW=pos.w;
-
-  var pIdx=nextPhotoIdx();
-  triggerBeam(activeLeaf,function(){
+  activeLeaf=Math.floor(rand(0, leaves.length));
+  var lf=leaves[activeLeaf];
+  frameW=clamp(Math.min(W,H)*0.25,100,220);
+  frameX=clamp(lf.cx-frameW/2, 20, W-frameW-20);
+  frameY=clamp(lf.cy+20, 20, H-frameW-20);
+  if(photoIndex>=photoQueue.length){photoIndex=0;shuffleQueue();}
+  var pIdx=photoQueue[photoIndex++];
+  triggerBeam(activeLeaf, function(){
     var img=new Image();
     img.src=PHOTOS[pIdx];
-    img.onload=function(){
-      currentImg=img;
-      activeAlpha=0;
-      showTimer=0;
-      photoPhase="fadein";
-    };
+    img.onload=function(){ currentImg=img; photoPhase="fadein"; showTimer=0; };
   });
 }
 
-// Called ONCE per frame (not twice) — fixes double-speed bug
 function advancePhotoState(){
   if(photoPhase==="idle") return;
   if(photoPhase==="fadein"){
-    showTimer++;
-    activeAlpha=Math.min(1,showTimer/FADE_IN);
+    showTimer++; activeAlpha=Math.min(1,showTimer/FADE_IN);
     if(showTimer>=FADE_IN){showTimer=0;photoPhase="hold";}
   }else if(photoPhase==="hold"){
-    showTimer++;
-    activeAlpha=1;
-    if(showTimer>=SHOW_DUR){showTimer=0;photoPhase="fadeout";}
+    showTimer++; if(showTimer>=SHOW_DUR){showTimer=0;photoPhase="fadeout";}
   }else if(photoPhase==="fadeout"){
-    showTimer++;
-    activeAlpha=Math.max(0,1-showTimer/FADE_OUT);
-    if(showTimer>=FADE_OUT){
-      activeAlpha=0;currentImg=null;showTimer=0;photoPhase="idle";
-      if(pendingTimeout) clearTimeout(pendingTimeout);
-      pendingTimeout=setTimeout(loadNextPhoto,500);
-    }
+    showTimer++; activeAlpha=Math.max(0,1-showTimer/FADE_OUT);
+    if(showTimer>=FADE_OUT){ activeAlpha=0;currentImg=null;photoPhase="idle";setTimeout(loadNextPhoto,1000); }
   }
 }
 
-// ── Draw photo frame ──────────────────────────────────────────────────────────
-function drawPhotoFrame(){
-  if(!currentImg||activeAlpha<=0) return;
-
-  var alpha=activeAlpha;
-  var scale=0.90+alpha*0.10;
-  var pw=frameW*scale;
-  var ph=pw; // square frame
-  // Re-centre around stored position as it scales
-  var px=frameX+(frameW-pw)/2;
-  var py=frameY+(frameW-pw)/2;
-
-  // Gentle float
-  py+=Math.sin(frame*0.045)*3;
-
-  // Soft glow ring behind frame
-  ctx.save();ctx.globalAlpha=alpha*0.45;
-  ctx.fillStyle="#ff4fc1";ctx.shadowColor="#ff4fc1";ctx.shadowBlur=40;
-  rr(px-7,py-7,pw+14,ph+14,20);ctx.fill();ctx.restore();
-
-  // Photo clipped to rounded rect — drawImage at full resolution
-  ctx.save();ctx.globalAlpha=alpha;
-  rr(px,py,pw,ph,14);ctx.clip();
-  ctx.imageSmoothingEnabled=true;
-  ctx.imageSmoothingQuality="high";
-  ctx.drawImage(currentImg,px,py,pw,ph);
-  ctx.restore();
-
-  // Crisp border
-  ctx.save();ctx.globalAlpha=alpha;
-  rr(px,py,pw,ph,14);
-  ctx.strokeStyle="#ffb8e8";ctx.lineWidth=2;ctx.stroke();ctx.restore();
-
-  // Dashed connector from leaf to frame edge
-  if(activeLeaf>=0&&activeLeaf<leaves.length){
-    var lf=leaves[activeLeaf];
-    var ox=Math.sin(frame*0.02+lf.phase)*lf.swayAmp*0.3;
-    var oy=Math.cos(frame*0.02+lf.phase)*lf.swayAmp*0.2;
-    ctx.save();ctx.globalAlpha=alpha*0.28;
-    ctx.beginPath();
-    ctx.moveTo(lf.cx+ox,lf.cy+oy);
-    ctx.lineTo(px+pw/2,py);
-    ctx.strokeStyle="#ff9fd6";ctx.lineWidth=1.4;
-    ctx.setLineDash([4,5]);ctx.stroke();ctx.setLineDash([]);
-    ctx.restore();
-  }
-}
-
-// ── Main animation loop ───────────────────────────────────────────────────────
 function animate(){
   requestAnimationFrame(animate);
   frame++;
   buildProgress=clamp(buildProgress+0.0015,0,1);
   var bp=buildProgress;
 
-  // Background + radial gradient
   ctx.fillStyle="#050005";ctx.fillRect(0,0,W,H);
   var g=ctx.createRadialGradient(W/2,H*0.5,0,W/2,H*0.5,W*0.65);
   g.addColorStop(0,"rgba(65,0,42,0.45)");g.addColorStop(1,"rgba(0,0,0,0)");
@@ -579,183 +286,81 @@ function animate(){
   updateDust();drawDust();
   updatePetals();drawPetals();
 
-  // ── Header — 3 lines ──────────────────────────────────────────────────────
-  var titleAlpha=clamp(bp/0.22,0,1);
-  if(titleAlpha>0){
+  // Header
+  if(bp > 0.1){
     ctx.save();ctx.textAlign="center";
-
-    // Line 1: ✦ HAPPY BIRTHDAY ✦
-    var line1="✦ HAPPY BIRTHDAY ✦";
-    var f1=fs(0.042);
-    ctx.font="bold "+f1+"px Cinzel,serif";
-    while(ctx.measureText(line1).width>W*0.88&&f1>11){
-      f1--;ctx.font="bold "+f1+"px Cinzel,serif";
-    }
-    var y1=H*0.065;
-    // Glow
-    ctx.globalAlpha=titleAlpha*0.30;
-    ctx.fillStyle="#e8902a";ctx.shadowColor="#d4a853";ctx.shadowBlur=55;
-    ctx.fillText(line1,W/2,y1);
-    // Main
-    ctx.globalAlpha=titleAlpha;
-    ctx.fillStyle="#f0c060";
-    ctx.shadowColor="#d4a853";ctx.shadowBlur=22+Math.sin(frame*0.04)*9;
-    ctx.fillText(line1,W/2,y1);
-
-    // Line 2: A little memory, just for you ♥
-    var line2="A little memory, just for you \u2764";
-    var f2=fs(0.023);
-    ctx.font="italic "+f2+'px "Dancing Script",cursive';
-    while(ctx.measureText(line2).width>W*0.80&&f2>10){
-      f2--;ctx.font="italic "+f2+'px "Dancing Script",cursive';
-    }
-    var y2=y1+f1*1.65;
-    ctx.globalAlpha=titleAlpha*0.9;
-    ctx.fillStyle="#ff82c9";ctx.shadowColor="#ff4fb5";ctx.shadowBlur=14;
-    ctx.fillText(line2,W/2,y2);
-
-    // Line 3: Recipient name
-    var name=RECIPIENT&&RECIPIENT.trim()?RECIPIENT.trim():"";
-    if(name){
-      var f3=fs(0.032);
-      ctx.font="bold "+f3+"px Cinzel,serif";
-      while(ctx.measureText(name).width>W*0.72&&f3>10){
-        f3--;ctx.font="bold "+f3+"px Cinzel,serif";
-      }
-      var y3=y2+f2*1.85;
-      ctx.globalAlpha=titleAlpha;
-      ctx.fillStyle="#ffd0e8";ctx.shadowColor="#ff4fb5";ctx.shadowBlur=18;
-      ctx.fillText(name,W/2,y3);
-    }
-
+    ctx.globalAlpha=clamp((bp-0.1)*5,0,1);
+    ctx.fillStyle="#f0c060";ctx.font="bold "+fs(0.045)+"px Cinzel";
+    ctx.fillText("✦ HAPPY BIRTHDAY ✦", W/2, H*0.08);
+    ctx.fillStyle="#ffd0e8";ctx.font="bold "+fs(0.035)+"px Cinzel";
+    ctx.fillText(RECIPIENT, W/2, H*0.14);
     ctx.restore();
   }
 
-  // ── Roots — left to right in order ───────────────────────────────────────
-  if(bp>0.18){
-    for(var ri=0;ri<roots.length;ri++){
-      var r=roots[ri];
-      var rootStart=0.18+ri*0.018;
-      var localBP=clamp((bp-rootStart)/0.20,0,1);
-      if(localBP<=0) continue;
-      r.progress=Math.min(1,r.progress+0.005);
-      var drawT=r.progress*localBP;
-
-      var rootGlow=r.progress>=1
-        ? 6+Math.sin(frame*0.03+r.pulseOffset)*4 : 0;
-
-      ctx.save();ctx.globalAlpha=localBP;
+  // Roots
+  roots.forEach((r,i)=>{
+    var rs=0.18+i*0.02;
+    var lp=clamp((bp-rs)/0.2,0,1);
+    if(lp>0){
       ctx.beginPath();ctx.moveTo(r.sx,r.sy);
-      for(var s=1;s<=50;s++){
-        var pt=bez(r,(s/50)*drawT);ctx.lineTo(pt.x,pt.y);
-      }
-      ctx.strokeStyle="#8a4e28";
-      ctx.lineWidth=clamp(W*0.003,1.5,3.5);
-      ctx.lineCap="round";
-      if(rootGlow>0){ctx.shadowColor="#c87820";ctx.shadowBlur=rootGlow;}
-      ctx.stroke();ctx.restore();
-
-      if(r.progress>0.9){
-        var ep=bez(r,1);
-        var wordAlpha=((r.progress-0.9)/0.1)*localBP;
-        ctx.save();ctx.globalAlpha=wordAlpha;
-        var rfs=fs(0.022);
-        ctx.font='italic '+rfs+'px "Dancing Script",cursive';
-        ctx.fillStyle="#f5c842";
-        ctx.shadowColor="#f5c842";
-        ctx.shadowBlur=rootGlow>0?8+Math.sin(frame*0.03+r.pulseOffset)*4:10;
-        ctx.textAlign="center";
-        ctx.fillText(r.word,ep.x,ep.y+5);
-        ctx.restore();
+      for(var s=1;s<=20;s++){ var pt=bez(r,(s/20)*lp); ctx.lineTo(pt.x,pt.y); }
+      ctx.strokeStyle="#8a4e28";ctx.lineWidth=2;ctx.stroke();
+      if(lp>0.9){
+          ctx.save();ctx.globalAlpha=(lp-0.9)*10;
+          ctx.fillStyle="#f5c842";ctx.font='italic '+fs(0.022)+'px "Dancing Script"';
+          var ep=bez(r,1);ctx.fillText(r.word,ep.x,ep.y+15);ctx.restore();
       }
     }
-  }
+  });
 
-  // ── Branches — progressive vein growth ───────────────────────────────────
-  for(var bi=0;bi<branches.length;bi++){
-    var b=branches[bi];
+  // Branches
+  branches.forEach(b => {
     var ba=clamp((bp-b.rs)/(b.re-b.rs),0,1);
-    if(ba<=0) continue;
-
-    var ex2=b.x1+b.ax*b.len*ba;
-    var ey2=b.y1+b.ay*b.len*ba;
-    var gg=ctx.createLinearGradient(b.x1,b.y1,ex2,ey2);
-    gg.addColorStop(0,b.depth===0?"#5a2a0a":"#4a2008");
-    gg.addColorStop(1,b.depth===0?"#8c5020":"#6e3810");
-    ctx.save();ctx.globalAlpha=1;
-    ctx.beginPath();ctx.moveTo(b.x1,b.y1);ctx.lineTo(ex2,ey2);
-    ctx.strokeStyle=gg;
-    ctx.lineWidth=Math.max(1,(8-b.depth)*1.6*(Math.min(W,H)/720));
-    ctx.lineCap="round";ctx.stroke();ctx.restore();
-  }
-
-  // ── Leaves ────────────────────────────────────────────────────────────────
-  for(var li=0;li<leaves.length;li++){
-    var lf=leaves[li];
-    var la=clamp((bp-lf.rs)/(lf.re-lf.rs),0,1);
-    if(la<=0) continue;
-
-    var sw=Math.sin(frame*0.03*lf.swaySpeed+lf.phase)*lf.swayAmp;
-    var ox=Math.sin(frame*0.02+lf.phase)*lf.swayAmp*0.3;
-    var oy=Math.cos(frame*0.02+lf.phase)*lf.swayAmp*0.2;
-    var isA=(li===activeLeaf);
-
-    var distFromActive=999;
-    if(activeLeaf>=0&&activeLeaf<leaves.length&&!isA){
-      var alx=leaves[activeLeaf].cx, aly=leaves[activeLeaf].cy;
-      distFromActive=Math.sqrt((lf.cx-alx)*(lf.cx-alx)+(lf.cy-aly)*(lf.cy-aly));
+    if(ba>0){
+      ctx.beginPath();ctx.moveTo(b.x1,b.y1);
+      ctx.lineTo(b.x1+b.ax*b.len*ba, b.y1+b.ay*b.len*ba);
+      ctx.strokeStyle="#6e3810";ctx.lineWidth=Math.max(1,(8-b.depth)*1.5);ctx.stroke();
     }
-    var neighbourRadius=Math.min(W,H)*0.15;
-    var neighbourGlow=distFromActive<neighbourRadius
-      ?(1-distFromActive/neighbourRadius)*0.5:0;
+  });
 
-    var depthDim=isA?1.0:clamp(0.45+0.55*(1-li/leaves.length),0.45,0.85);
-    var lit=isA?68:38+neighbourGlow*22+Math.sin(frame*0.03+lf.phase)*6;
-    var sat=isA?92:(62+neighbourGlow*20);
-    var glowPx=isA?20:(6+neighbourGlow*16);
+  // Leaves
+  leaves.forEach((lf,i) => {
+    var la=clamp((bp-lf.rs)/(lf.re-lf.rs),0,1);
+    if(la>0){
+      var sw=Math.sin(frame*0.03+lf.phase)*5;
+      heart(lf.cx,lf.cy,lf.baseAngle-90+sw,lf.size,"hsl("+lf.hue+",80%,50%)",la,i===activeLeaf?25:5);
+    }
+  });
 
-    heart(lf.cx+ox,lf.cy+oy,lf.baseAngle-90+sw,lf.size,
-      "hsl("+lf.hue+","+sat+"%,"+lit+"%)",
-      la*depthDim,glowPx);
-  }
-
-  // Advance photo state every frame — always, not just when non-idle
   advancePhotoState();
-
-  drawBeam();
-  updateBurst();drawBurst();
-
-  // Draw photo frame on top of everything
-  drawPhotoFrame();
-
-  // Kick off photo cycle — single call, 2s after tree looks complete
-  if(!firstScheduled&&bp>=0.75&&leaves.length>0&&PHOTOS.length>0){
-    firstScheduled=true;
-    setTimeout(loadNextPhoto,2000);
+  if(currentImg && activeAlpha>0){
+    ctx.save();ctx.globalAlpha=activeAlpha;
+    var py=frameY+Math.sin(frame*0.05)*5;
+    rr(frameX,py,frameW,frameW,12);ctx.clip();
+    ctx.drawImage(currentImg,frameX,py,frameW,frameW);
+    ctx.restore();
   }
+
+  if(beam){
+    beam.t+=0.05; var p=cubicBez(beam.p0,beam.p1,beam.p2,beam.p3,beam.t);
+    ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);ctx.fill();
+    if(beam.t>=1){beam.cb();beam=null;}
+  }
+
+  if(!firstScheduled && bp > 0.8 && PHOTOS.length > 0){ firstScheduled=true; setTimeout(loadNextPhoto,1000); }
 }
 
 resize();
 animate();
 
-// Click any leaf to open modal with current photo
+// Click modal
 canvas.addEventListener("click",function(e){
   if(!currentImg) return;
-  var mx=e.clientX,my=e.clientY;
-  for(var i=0;i<leaves.length;i++){
-    var lf=leaves[i];
-    if(Math.sqrt((mx-lf.cx)*(mx-lf.cx)+(my-lf.cy)*(my-lf.cy))<lf.size*3.2){
-      document.getElementById("modalImg").src=currentImg.src;
-      document.getElementById("photoModal").classList.add("show");
-      break;
-    }
-  }
+  document.getElementById("modalImg").src=currentImg.src;
+  document.getElementById("photoModal").classList.add("show");
 });
 
-}catch(err){
-  document.body.style.cssText="background:#0a0008;color:#f48fb1;display:flex;align-items:center;justify-content:center;height:100vh;font-family:serif;text-align:center;padding:2rem;flex-direction:column;gap:1rem;";
-  document.body.innerHTML="<div style='font-size:2rem'>\uD83C\uDF39</div><div>"+err.message+"</div>";
-}
+}catch(err){ console.error(err); }
 })();
 </script>
 </body>
