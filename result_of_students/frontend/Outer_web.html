@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Academia — Select Institute</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="tmp.css" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════════
+       LANDING OVERLAY — Institute Selection
+       Shown on top of the page; dismissed on selection
+       ══════════════════════════════════════════════════ -->
+  <div class="landing-overlay" id="landingOverlay" role="dialog" aria-modal="true" aria-labelledby="landing-title">
+
+    <div class="landing-card">
+
+      <!-- Brand mark -->
+      <div class="landing-brand">
+        <svg class="landing-logo-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="2" y="2" width="28" height="28" rx="8" fill="currentColor" opacity="0.15"/>
+          <path d="M16 8L20 12H17V18H19L16 22L13 18H15V12H12L16 8Z" fill="currentColor"/>
+          <circle cx="9" cy="20" r="2.5" fill="currentColor" opacity="0.6"/>
+          <circle cx="23" cy="20" r="2.5" fill="currentColor" opacity="0.6"/>
+        </svg>
+        <span class="landing-brand-name">Academia</span>
+      </div>
+
+      <h1 id="landing-title" class="landing-title">Select your <em>Institute</em></h1>
+      <p class="landing-sub">Choose the school or campus you want to search students for.</p>
+
+      <!-- Filter input -->
+      <div class="landing-search-wrap">
+        <svg class="landing-search-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M13 13l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <input
+          type="text"
+          id="instituteSearch"
+          class="landing-search-input"
+          placeholder="Filter institutes…"
+          autocomplete="off"
+          spellcheck="false"
+          aria-label="Filter institute list"
+          aria-controls="instituteList"
+        />
+      </div>
+
+      <!-- Institute list -->
+      <ul class="institute-list" id="instituteList" role="listbox" aria-label="Institute list">
+
+        <li class="institute-item" role="option" tabindex="0"
+            data-name="Academica Secondary School"
+            data-address="Ghorahi-15, Dang">
+          <span class="inst-icon" aria-hidden="true">🏫</span>
+          <span class="inst-info">
+            <span class="inst-name">Academica Secondary School</span>
+            <span class="inst-address">Ghorahi-15, Dang</span>
+          </span>
+          <svg class="inst-chevron" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M7 5l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </li>
+
+        <li class="institute-item" role="option" tabindex="0"
+            data-name="Ghorahi Secondary School"
+            data-address="Ghorahi-4, Dang">
+          <span class="inst-icon" aria-hidden="true">🏫</span>
+          <span class="inst-info">
+            <span class="inst-name">Ghorahi Secondary School</span>
+            <span class="inst-address">Ghorahi-4, Dang</span>
+          </span>
+          <svg class="inst-chevron" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M7 5l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </li>
+
+        <li class="institute-item" role="option" tabindex="0"
+            data-name="Rapti Secondary School"
+            data-address="Tulsipur-10, Dang">
+          <span class="inst-icon" aria-hidden="true">🏫</span>
+          <span class="inst-info">
+            <span class="inst-name">Rapti Secondary School</span>
+            <span class="inst-address">Tulsipur-10, Dang</span>
+          </span>
+          <svg class="inst-chevron" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M7 5l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </li>
+
+        <li class="institute-item" role="option" tabindex="0"
+            data-name="Dang Valley Campus"
+            data-address="Lamahi-3, Dang">
+          <span class="inst-icon" aria-hidden="true">🎓</span>
+          <span class="inst-info">
+            <span class="inst-name">Dang Valley Campus</span>
+            <span class="inst-address">Lamahi-3, Dang</span>
+          </span>
+          <svg class="inst-chevron" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M7 5l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </li>
+
+        <li class="institute-item" role="option" tabindex="0"
+            data-name="Shree Bhagwati Secondary School"
+            data-address="Bijauri-6, Dang">
+          <span class="inst-icon" aria-hidden="true">🏫</span>
+          <span class="inst-info">
+            <span class="inst-name">Shree Bhagwati Secondary School</span>
+            <span class="inst-address">Bijauri-6, Dang</span>
+          </span>
+          <svg class="inst-chevron" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M7 5l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </li>
+
+        <li class="institute-item" role="option" tabindex="0"
+            data-name="New Horizon Higher Secondary School"
+            data-address="Ghorahi-7, Dang">
+          <span class="inst-icon" aria-hidden="true">🎓</span>
+          <span class="inst-info">
+            <span class="inst-name">New Horizon Higher Secondary School</span>
+            <span class="inst-address">Ghorahi-7, Dang</span>
+          </span>
+          <svg class="inst-chevron" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M7 5l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </li>
+
+      </ul>
+
+      <p class="landing-no-results" id="landingNoResults" aria-live="polite" hidden>No institutes found.</p>
+
+    </div>
+  </div>
+  <!-- END LANDING OVERLAY -->
+
+  <!-- ── Header (background page, dimmed by overlay) ── -->
+  <header class="site-header" aria-hidden="true">
+    <div class="header-inner">
+      <button type="button" class="logo" id="logoBtn" aria-label="Academia home" tabindex="-1">
+        <svg class="logo-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="2" y="2" width="28" height="28" rx="8" fill="currentColor" opacity="0.12"/>
+          <path d="M16 8L20 12H17V18H19L16 22L13 18H15V12H12L16 8Z" fill="currentColor"/>
+          <circle cx="9" cy="20" r="2.5" fill="currentColor" opacity="0.5"/>
+          <circle cx="23" cy="20" r="2.5" fill="currentColor" opacity="0.5"/>
+        </svg>
+        <span class="logo-text">Academia</span>
+      </button>
+      <!-- Institute chip: shown after a selection is made in the header -->
+      <div class="header-institute-chip" id="headerInstituteChip" hidden aria-live="polite">
+        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path d="M10 2L2 7v11h5v-5h6v5h5V7L10 2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+        </svg>
+        <span id="headerInstituteName"></span>
+        <button type="button" class="chip-change-btn" id="changeInstituteBtn" title="Change institute">Change</button>
+      </div>
+      <nav class="header-nav" aria-label="Main navigation"></nav>
+    </div>
+  </header>
+
+  <!-- Background content (blurred beneath overlay) -->
+  <div class="content-area" id="contentArea">
+    <main class="main-content">
+      <section class="page-hero">
+        <h1>Student <em>Search</em></h1>
+        <p class="hero-sub">Query the academic registry by name or Nepali passing year (B.S.).</p>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <p>Academia &copy; 2082 B.S. &mdash; Academic Registry System</p>
+  </footer>
+
+  <script src="outer_web.js" defer></script>
+</body>
+</html>

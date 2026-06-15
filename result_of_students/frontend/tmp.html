@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Search Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="tmp.css" />
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header class="site-header">
+    <div class="header-inner">
+      <button type="button" class="logo" id="logoBtn" aria-label="Go to home / refresh page" title="Click to refresh">
+        <svg class="logo-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="2" y="2" width="28" height="28" rx="8" fill="currentColor" opacity="0.12"/>
+          <path d="M16 8L20 12H17V18H19L16 22L13 18H15V12H12L16 8Z" fill="currentColor"/>
+          <circle cx="9" cy="20" r="2.5" fill="currentColor" opacity="0.5"/>
+          <circle cx="23" cy="20" r="2.5" fill="currentColor" opacity="0.5"/>
+        </svg>
+        <span class="logo-text">Academia</span>
+      </button>
+      <!-- Institute chip — populated by JS when navigated from outer_web.html -->
+      <div class="header-institute-chip" id="headerInstituteChip" hidden aria-live="polite">
+        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path d="M10 2L2 7v11h5v-5h6v5h5V7L10 2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+        </svg>
+        <span id="headerInstituteName"></span>
+        <button type="button" class="chip-change-btn" id="changeInstituteBtn"
+                title="Back to institute selection"
+                onclick="window.location.href='outer_web.html'">Change</button>
+      </div>
+      <nav class="header-nav" aria-label="Main navigation">
+      </nav>
+    </div>
+  </header>
+
+  <!-- ── Dashboard Side Panel ── -->
+  <aside class="dashboard-panel" aria-label="Dashboard info panel">
+    <div class="dashboard-inner">
+
+      <div class="dash-card">
+        <h3 class="dash-card-title">
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5z" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M2 7l8 5 8-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Contact
+        </h3>
+        <ul class="dash-list">
+          <li class="dash-item" tabindex="0">
+            <svg class="dash-item-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M10 2L2 7v11h5v-5h6v5h5V7L10 2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+            </svg>
+            <span>Contact school officials</span>
+            <div class="tooltip" role="tooltip">
+              <p class="tooltip-row"><span class="t-icon">📞</span><span>085-123456</span></p>
+              <p class="tooltip-row"><span class="t-icon">✉️</span><span>school@gmaillll.com</span></p>
+            </div>
+          </li>
+          <li class="dash-item" tabindex="0">
+            <svg class="dash-item-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M6 7l-4 3 4 3M14 7l4 3-4 3M11 5l-2 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Contact devs</span>
+            <div class="tooltip" role="tooltip">
+              <p class="tooltip-row"><span class="t-icon">📱</span><span>+977-9812345678</span></p>
+              <p class="tooltip-row"><span class="t-icon">✉️</span><span>dev@gmaill.com</span></p>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="dash-card">
+        <h3 class="dash-card-title">
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M18 10c0 4.418-3.582 8-8 8a8 8 0 01-4.343-1.29L2 18l1.29-3.657A8 8 0 1118 10z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+          Feedback
+        </h3>
+        <p class="dash-feedback-text">Found a bug or have suggestions? Reach the dev team directly.</p>
+        <div class="dash-contact-block">
+          <p class="dash-contact-row">
+            <svg viewBox="0 0 20 20" fill="none" class="dash-contact-icon" aria-hidden="true">
+              <rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/>
+              <path d="M2 7l8 5 8-5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+            <a href="mailto:dev@gmaill.com" class="dash-link">dev@gmaill.com</a>
+          </p>
+          <p class="dash-contact-row">
+            <svg viewBox="0 0 20 20" fill="none" class="dash-contact-icon" aria-hidden="true">
+              <path d="M3 5a2 2 0 012-2h1.586a1 1 0 01.707.293l2.414 2.414a1 1 0 010 1.414L8.293 8.535A11.037 11.037 0 0011.465 11.707l1.414-1.414a1 1 0 011.414 0l2.414 2.414A1 1 0 0117 13.414V15a2 2 0 01-2 2H13C7.477 17 3 12.523 3 7V5z" stroke="currentColor" stroke-width="1.4"/>
+            </svg>
+            <a href="tel:+9779812345678" class="dash-link">+977-9812345678</a>
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- ── Content Area: search panel + marksheet side by side ── -->
+  <div class="content-area" id="contentArea">
+
+    <!-- LEFT: Search panel (the green-circled area) -->
+    <main class="main-content" id="mainContent">
+
+      <section class="page-hero" aria-labelledby="page-title">
+        <h1 id="page-title">Student <em>Search</em></h1>
+        <p class="hero-sub">Query the academic registry by name, date of birth and  Nepali passing year (B.S.).</p>
+      </section>
+
+      <section class="hint-box" aria-labelledby="hint-title">
+        <header class="hint-header">
+          <svg class="hint-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M12 7v1M12 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <h2 id="hint-title">How to Search</h2>
+        </header>
+        <ul class="hint-list">
+          <li><span class="hint-tag">Name</span> Letters only, no numbers or symbols allowed</li>
+          <li><span class="hint-tag">DOB</span> Enter date of birth of the student (DD/MM/YYYY)</li>
+          <li><span class="hint-tag">Year (B.S.)</span> Select a Nepali passing year to narrow results — e.g. <code>2080</code></li>
+          <li><span class="hint-tag">Search</span> Hit the search button to view results</li>
+        </ul>
+      </section>
+
+      <section class="search-section" aria-labelledby="form-title">
+        <h2 id="form-title" class="sr-only">Search Form</h2>
+        <form id="searchForm" class="search-form" novalidate>
+          <div class="field-group">
+            <label for="nameInput">Student full name</label>
+            <input type="text" id="nameInput" name="name"
+              placeholder="E.G. ANANYA SHARMA"
+              autocomplete="off" spellcheck="false"
+              inputmode="text"
+              aria-describedby="nameHint"/>
+            <span class="field-hint" id="nameHint">Letters only — auto uppercased</span>
+          </div>
+          <div class="field-group">
+            <label for="dobInput">Date of birth</label>
+            <input type="text" id="dobInput" name="dob"
+              placeholder="DD/MM/YYYY"
+              maxlength="10"
+              inputmode="numeric"
+              autocomplete="off"
+              aria-describedby="dobHint"/>
+            <span class="field-hint" id="dobHint">Format: DD/MM/YYYY</span>
+          </div>
+          <div class="field-group">
+            <label for="yearInput">Passing year (B.S.)</label>
+            <select id="yearInput" name="year" class="year-select">
+              <option value="">— All years —</option>
+              <option value="2075">2075 B.S.</option>
+              <option value="2076">2076 B.S.</option>
+              <option value="2077">2077 B.S.</option>
+              <option value="2078">2078 B.S.</option>
+              <option value="2079">2079 B.S.</option>
+              <option value="2080">2080 B.S.</option>
+              <option value="2081">2081 B.S.</option>
+              <option value="2082">2082 B.S.</option>
+            </select>
+          </div>
+          <button type="submit" class="btn-search">
+            <svg class="btn-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M13 13l3.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            Search
+          </button>
+        </form>
+        <div id="messageArea" role="status" aria-live="polite" aria-atomic="true"></div>
+      </section>
+
+      <section class="results-section" aria-labelledby="results-title">
+        <h2 id="results-title" class="sr-only">Search Results</h2>
+        <div class="table-wrapper">
+          <table id="studentTable" aria-label="Student results">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Passing Year (B.S.)</th>
+                <th scope="col">GPA</th>
+                <th scope="col">Major</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <template>
+                {# Jinja — server-side injection #}
+                {% for student in students %}
+                <tr>
+                  <td>{{ student.name }}</td>
+                  <td>{{ student.passing_year }} B.S.</td>
+                  <td>{{ student.gpa }}</td>
+                  <td>{{ student.major }}</td>
+                </tr>
+                {% endfor %}
+              </template>
+            </tbody>
+          </table>
+        </div>
+        <nav class="pagination" aria-label="Table pagination">
+          <button type="button" id="prevBtn" class="btn-page" disabled aria-label="Previous page">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M12 5l-5 5 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Previous
+          </button>
+          <span class="page-info" id="pageInfo" aria-live="polite">Page 1</span>
+          <button type="button" id="nextBtn" class="btn-page" disabled aria-label="Next page">
+            Next
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M8 5l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </nav>
+      </section>
+
+    </main>
+
+    <!-- RIGHT: Marksheet panel — NEB Grade-Sheet format -->
+    <aside class="marksheet-panel" id="marksheetPanel" aria-label="Student grade sheet" aria-hidden="true">
+      <div class="marksheet" id="marksheet">
+
+        <!-- अनुसूची ३ top-right -->
+        <p class="ms-annex">अनुसूची ३</p>
+
+        <!-- School header -->
+        <header class="ms-school-header">
+          <div class="ms-logo-box" aria-label="School logo">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <ellipse cx="32" cy="32" rx="30" ry="30" stroke="#555" stroke-width="1.5"/>
+              <path d="M32 14L44 24H38V42H26V24H20L32 14Z" fill="#555"/>
+              <circle cx="32" cy="48" r="3" fill="#555"/>
+            </svg>
+            <span>School Logo</span>
+          </div>
+          <div class="ms-school-info">
+            <p class="ms-school-name" id="ms-school-name">Academica Secondary School</p>
+            <p class="ms-school-address" id="ms-school-address">Ghorahi-15, Dang</p>
+          </div>
+        </header>
+
+        <!-- Title -->
+        <h2 class="ms-title">GRADE-SHEET</h2>
+
+        <!-- Student fields -->
+        <div class="ms-fields">
+          <p class="ms-field-line">
+            <span class="ms-field-label">THE FOLLOWING ARE THE GRADE(S) OBTAINED BY :</span>
+            <span class="ms-field-value ms-field-underline" id="ms-student-name">................................</span>
+          </p>
+          <p class="ms-field-line">
+            <span class="ms-field-label">DATE OF BIRTH :</span>
+            <span class="ms-field-value ms-field-underline" id="ms-dob">........................</span>
+            <span class="ms-field-label ms-field-bs">B.S.</span>
+            <span class="ms-field-label">&nbsp;(&nbsp;</span>
+            <span class="ms-field-value ms-field-underline" id="ms-dob-ad">........................</span>
+            <span class="ms-field-label ms-field-bs">&nbsp;A.D.)</span>
+          </p>
+          <p class="ms-field-line ms-field-row3">
+            <span class="ms-field-label">REGISTRATION NO</span>
+            <span class="ms-field-value ms-field-underline" id="ms-reg-no">........................</span>
+            <span class="ms-field-label">&nbsp;&nbsp;SYMBOL NO:</span>
+            <span class="ms-field-value ms-field-underline" id="ms-symbol-no">................</span>
+            <span class="ms-field-label ms-grade-label">&nbsp;&nbsp;GRADE : XI</span>
+          </p>
+          <p class="ms-field-line ms-exam-line">
+            IN THE ANNUAL EXAMINATION CONDUCTED BY SCHOOL/CAMPUS IN
+            <span class="ms-field-value ms-field-underline" id="ms-exam-year">............</span>
+            B.S.
+            (<span class="ms-field-value ms-field-underline" id="ms-exam-year-ad">............</span>
+            A.D.) ARE GIVEN BELOW.
+          </p>
+        </div>
+
+        <!-- Grades table -->
+        <div class="ms-table-wrap">
+          <table class="ms-table" aria-label="Subject grades">
+            <thead>
+              <tr>
+                <th scope="col">SUBJECT<br>CODE</th>
+                <th scope="col">SUBJECTS</th>
+                <th scope="col">CREDIT<br>HOUR</th>
+                <th scope="col">GRADE<br>POINT</th>
+                <th scope="col">GRADE</th>
+                <th scope="col">FINAL<br>GRADE</th>
+                <th scope="col">REMARKS</th>
+              </tr>
+            </thead>
+            <tbody id="ms-grades-body">
+              <!-- filled by JS — 10 empty rows pre-seeded -->
+            </tbody>
+            <tfoot>
+              <tr class="ms-total-row">
+                <td></td>
+                <td class="ms-total-label"><strong>TOTAL</strong></td>
+                <td id="ms-total-cr"></td>
+                <td></td>
+                <td colspan="3" class="ms-gpa-cell">
+                  GRADE POINT AVERAGE(GPA):&nbsp;<strong id="ms-cgpa"></strong>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Signatures -->
+        <div class="ms-sig-section">
+          <p class="ms-prepared">PREPARED BY :</p>
+          <div class="ms-sig-row">
+            <div class="ms-sig-block">
+              <p class="ms-sig-line">.....................</p>
+              <p class="ms-sig-role"><strong>CHECKED BY</strong></p>
+              <p class="ms-sig-role">(CLASS TEACHER)</p>
+            </div>
+            <div class="ms-sig-block ms-sig-right">
+              <p class="ms-sig-line">.....................</p>
+              <p class="ms-sig-role"><strong>HEAD MASTER/CAMPUS CHIEF</strong></p>
+            </div>
+          </div>
+          <p class="ms-date-issue">DATE OF ISSUE : <span id="ms-issue-date">.....................</span></p>
+        </div>
+
+        <!-- Footer note -->
+        <div class="ms-note-box">
+          <p>NOTE: ONE CREDIT HOUR EQUALS 32 CLOCK HOURS.</p>
+          <div class="ms-note-grid">
+            <span>TH= THEORY</span>
+            <span>PR= PRACTICAL</span>
+            <span>ABS= ABSENT</span>
+            <span>W= WITHHELD</span>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+  </div><!-- /.content-area -->
+
+  <footer class="site-footer">
+    <p>Academia &copy; 2082 B.S. &mdash; Academic Registry System</p>
+  </footer>
+
+  <script src="tmp.js" defer></script>
+</body>
+</html>
